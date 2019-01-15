@@ -6,7 +6,7 @@
   "types": "dist/market-session.d.ts",
   "scripts": {
     "install": "tsc",
-    "test": "ava test/**",
+    "test": "ava",
     "test:watch": "npm test -- --watch",
     "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
