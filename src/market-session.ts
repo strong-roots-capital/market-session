@@ -11,19 +11,26 @@ const defaultSessions = [
 ]
 
 
-/**
- * DOCUMENT
- */
-function fromString(session: string): number {
-    return -2
+export interface Session {
+    (date: Date, sessions: string[]): number[];
+    fromString(session: string): number;
 }
+
 
 /**
  * DOCUMENT
  */
-function toString(session: number): string {
-    return '100Y'
-}
+// function fromString(session: string): number {
+//     return -2
+// }
+
+/**
+ * DOCUMENT
+ */
+// function toString(session: number): string {
+//     // TODO: implement
+//     return '100Y'
+// }
 
 
 /**
@@ -35,19 +42,21 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
     return closed
 }
 
-// console.log(Object.getOwnPropertyDescriptor(session, 'test'))
 
 Object.defineProperties(session, {
     fromString: {
-        value: fromString
-    },
-    toString: {
-        value: toString
+        value: (session: string): number => {
+            return 5
+        }
     }
+    //,
+    // toString: {
+    //     value: toString
+    // }
 })
 
-export default session
-export {
-    fromString,
-    toString
-}
+export default session as Session
+// export {
+//     fromString,
+//     toString
+// }
