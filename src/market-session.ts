@@ -109,7 +109,3 @@ Object.defineProperties(session, {
 })
 
 export default session as Session
-// export {
-//     fromString,
-//     toString
-// }
