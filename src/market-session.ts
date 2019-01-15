@@ -20,9 +20,10 @@ export interface Session {
 /**
  * DOCUMENT
  */
-// function fromString(session: string): number {
-//     return -2
-// }
+function fromString(session: string): number {
+    ow(session, ow.string.not.empty)
+    return 5
+}
 
 /**
  * DOCUMENT
@@ -44,11 +45,16 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
 
 
 Object.defineProperties(session, {
+    // fromString: {
+    //     value: (session: string): number => {
+    //         return 5
+    //     }
+    // }
     fromString: {
-        value: (session: string): number => {
-            return 5
-        }
+        value: fromString
     }
+
+
     //,
     // toString: {
     //     value: toString
