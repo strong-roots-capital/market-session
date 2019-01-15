@@ -22,7 +22,18 @@ export interface Session {
  */
 function fromString(session: string): number {
     ow(session, ow.string.not.empty)
-    return 5
+    ow(session, ow.string.matches(/^[1-9]?[0-9]*[HDWMY]?$/))
+
+    let resolution: number = -1
+    if (/^[1-9][0-9]*$/.test(session)) {
+        resolution = parseInt(session)
+    }
+
+    else {
+        // TODO: throw error here
+    }
+
+    return resolution
 }
 
 /**
