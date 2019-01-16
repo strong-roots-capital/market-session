@@ -16,11 +16,10 @@ const defaultSessions = [
 
 
 export interface Session {
-    (date: Date, sessions?: string[]): number[];
-    fromString(session: string): number;
+    (date: Date, sessions?: string[]): number[]
+    fromString(session: string): number
+    toString(session: number): string
 }
-
-type Translation = [RegExp, (n: string) => number]
 
 
 /**
@@ -37,7 +36,7 @@ function fromString(session: string): number {
     ow(session, ow.string.not.empty)
     ow(session, ow.string.matches(/^[1-9]?[0-9]*[HDWMY]?$/))
 
-    const translations: Translation[] = [
+    const translations: [RegExp, (n: string) => number][] = [
         [/^[1-9][0-9]*$/, (n: string) => parseInt(n)],
         [/^[1-9][0-9]*H$/, (n: string) => parseInt(n) * 60],
         [/^[1-9][0-9]*D$/, (n: string) => parseInt(n) * 60 * 24],
@@ -59,7 +58,7 @@ function fromString(session: string): number {
     }
 
     /**
-     * Note: this block should never run. If you are seeing this
+     * Note: this statement should never run. If you are seeing this
      * error, the argument validation above is incorrect
      */
     throw new ArgumentError(`Cannot interpret session interval '${session}'`, fromString)
@@ -68,18 +67,33 @@ function fromString(session: string): number {
 /**
  * DOCUMENT
  */
-// function toString(session: number): string {
-//     // TODO: implement
-//     return '100Y'
-// }
+function toString(session: number): string {
+    ow(session, ow.number.greaterThan(0))
+
+    const translations: [(n: number) => boolean, (n: number) => string][] = [
+        [(n: number) => n < 60 * 24 && n % 60 == 0, (n: number) => `${session/60}H`],
+    ]
+
+    for (const [predicate, translation] of translations) {
+        if (predicate(session))
+            return translation(session)
+    }
+
+    return session.toString()
+}
 
 
 /**
  * DOCUMENT
  */
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
+
     let closed: number[] = []
+
     // TODO: implement
+    const minutesIntoDay = date.getHours() * 60 + date.getMinutes()
+    console.log('Minutes into day:', minutesIntoDay)
+
     return closed
 }
 
@@ -87,11 +101,10 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
 Object.defineProperties(session, {
     fromString: {
         value: fromString
+    },
+    toString: {
+        value: toString
     }
-    //,
-    // toString: {
-    //     value: toString
-    // }
 })
 
 export default session as Session

@@ -1,0 +1,37 @@
+import test from 'ava'
+
+/**
+ * Library under test
+ */
+
+import session from '../src/market-session'
+
+test('should throw ArgumentError when passed a number less-than one', t => {
+    const testStrings = [0]
+    testStrings.forEach((session) => {
+        const error = t.throws(() => {
+            session.toString(session)
+        // TODO: try to import and compare to argumenterror
+        }, Error)
+        // t.deepEqual(error.message, `Expected number to be greater than 0, got ${session}`)
+    })
+})
+
+test('integers less-than or equal-to 60 should return the identity', t => {
+    t.is('1', session.toString(1))
+    t.is('5', session.toString(5))
+    t.is('15', session.toString(15))
+    t.is('59', session.toString(59))
+})
+
+test('integers less-than 1440 that divide evenly into 60 should return in units of hours', t => {
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        .forEach((hour: number) => {
+            t.is(`${hour}H`, session.toString(60 * hour))
+        })
+})
+
+test.todo('integers less-than 10080 that divide evenly into 1440 should return in units of days')
+test.todo('integers less-than 302400 that divide evenly into 10080 should return in units of weeks')
+test.todo('integers less-than 3628800 that divide evenly into 302400 should return in units of months')
+test.todo('integers that divide evenly into 3628800 should return in units of years')
