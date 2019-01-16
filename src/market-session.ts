@@ -21,6 +21,14 @@ export interface Session {
     toString(session: number): string
 }
 
+const MINUTES_IN_HOUR = 60
+const MINUTES_IN_DAY = 60 * 24
+const MINUTES_IN_WEEK = 60 * 24 * 7
+// TODO: verify this is the number used in each TradingView calendar month
+const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
+// TODO: verify this is the number used in each TradingView calendar year
+const MINUTES_IN_YEAR = 60 * 24 * 7 * 4 * 12
+
 
 /**
  * Convert a string-based representation of a market session into an
@@ -38,18 +46,16 @@ function fromString(session: string): number {
 
     const translations: [RegExp, (n: string) => number][] = [
         [/^[1-9][0-9]*$/, (n: string) => parseInt(n)],
-        [/^[1-9][0-9]*H$/, (n: string) => parseInt(n) * 60],
-        [/^[1-9][0-9]*D$/, (n: string) => parseInt(n) * 60 * 24],
-        [/^[1-9][0-9]*W$/, (n: string) => parseInt(n) * 60 * 24 * 7],
-        // TODO: verify this is the number used in each TradingView calendar month
-        [/^[1-9][0-9]*M$/, (n: string) => parseInt(n) * 60 * 24 * 7 * 30],
-        // TODO: verify this is the number used in each TradingView calendar year
-        [/^[1-9][0-9]*Y$/, (n: string) => parseInt(n) * 60 * 24 * 7 * 30 * 12],
-        [/^H$/, (n: string) => 60],
-        [/^D$/, (n: string) => 60 * 24],
-        [/^W$/, (n: string) => 60 * 24 * 7],
-        [/^M$/, (n: string) => 60 * 24 * 7 * 30],
-        [/^Y$/, (n: string) => 60 * 24 * 7 * 30 * 12]
+        [/^[1-9][0-9]*H$/, (n: string) => parseInt(n) * MINUTES_IN_HOUR],
+        [/^[1-9][0-9]*D$/, (n: string) => parseInt(n) * MINUTES_IN_DAY],
+        [/^[1-9][0-9]*W$/, (n: string) => parseInt(n) * MINUTES_IN_WEEK],
+        [/^[1-9][0-9]*M$/, (n: string) => parseInt(n) * MINUTES_IN_MONTH],
+        [/^[1-9][0-9]*Y$/, (n: string) => parseInt(n) * MINUTES_IN_YEAR],
+        [/^H$/, (n: string) => MINUTES_IN_HOUR],
+        [/^D$/, (n: string) => MINUTES_IN_DAY],
+        [/^W$/, (n: string) => MINUTES_IN_WEEK],
+        [/^M$/, (n: string) => MINUTES_IN_MONTH],
+        [/^Y$/, (n: string) => MINUTES_IN_YEAR]
     ]
 
     for (const [regex, translation] of translations) {
@@ -83,9 +89,11 @@ function toString(session: number): string {
     ow(session, ow.number.greaterThan(0))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
-        [(n: number) => n < 60 * 24 && n % 60 == 0, (n: number) => `${session/60}H`],
-        [(n: number) => n >= 60 * 24 * 7 && n % (60*24*7) == 0, (n: number) => `${session/(60*24*7)}W`],
-        [(n: number) => n >= 60 * 24 && n % (60*24) == 0, (n: number) => `${session/(60*24)}D`],
+        [(n: number) => n < MINUTES_IN_DAY && n % MINUTES_IN_HOUR == 0, (n: number) => `${session/MINUTES_IN_HOUR}H`],
+        [(n: number) => n >= MINUTES_IN_YEAR && n % MINUTES_IN_YEAR == 0, (n: number) => `${session/MINUTES_IN_YEAR}Y`],
+        [(n: number) => n >= MINUTES_IN_MONTH && n % MINUTES_IN_MONTH == 0, (n: number) => `${session/MINUTES_IN_MONTH}M`],
+        [(n: number) => n >= MINUTES_IN_WEEK && n % MINUTES_IN_WEEK == 0, (n: number) => `${session/MINUTES_IN_WEEK}W`],
+        [(n: number) => n >= MINUTES_IN_DAY && n % MINUTES_IN_DAY == 0, (n: number) => `${session/MINUTES_IN_DAY}D`],
     ]
 
     for (const [predicate, translation] of translations) {

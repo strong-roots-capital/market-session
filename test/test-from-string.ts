@@ -48,17 +48,17 @@ test('weeks should return associated integer times numbers', t => {
 })
 
 test('months should return associated integer times numbers', t => {
-    t.is(604800, session.fromString('2M'))
+    t.is(80640, session.fromString('2M'))
 })
 
 test('years should return associated integer times numbers', t => {
-    t.is(7257600, session.fromString('2Y'))
+    t.is(967680, session.fromString('2Y'))
 })
 
 test('should interpret an implicit 1 preceding a high-timeframe resolution', t => {
     t.is(60, session.fromString('H'))
     t.is(1440, session.fromString('D'))
     t.is(10080, session.fromString('W'))
-    t.is(302400, session.fromString('M'))
-    t.is(3628800, session.fromString('Y'))
+    t.is(40320, session.fromString('M'))
+    t.is(483840, session.fromString('Y'))
 })

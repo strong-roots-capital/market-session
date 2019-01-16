@@ -39,10 +39,19 @@ test('integers less-than 10080 that divide evenly into 1440 should return in uni
 })
 
 test('integers less-than 302400 that divide evenly into 10080 should return in units of weeks', t => {
-    for (let weeks = 1; weeks <= 4; ++weeks) {
+    for (let weeks = 1; weeks < 4; ++weeks) {
         t.is(`${weeks}W`, session.toString(weeks * 60 * 24 * 7))
     }
 })
 
-test.todo('integers less-than 3628800 that divide evenly into 302400 should return in units of months')
-test.todo('integers that divide evenly into 3628800 should return in units of years')
+test('integers less-than 3628800 that divide evenly into 302400 should return in units of months', t => {
+    for (let months = 1; months < 12; ++months) {
+        t.is(`${months}M`, session.toString(months * 60 * 24 * 7 * 4))
+    }
+})
+
+test('integers that divide evenly into 3628800 should return in units of years', t => {
+    for (let years = 1; years < 101; ++years) {
+        t.is(`${years}Y`, session.toString(years * 60 * 24 * 7 * 4 * 12))
+    }
+})
