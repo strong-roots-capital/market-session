@@ -35,12 +35,26 @@ test('one hour and one minute and one second past midnight should include no ses
     t.deepEqual([], session(date))
 })
 
-test.skip("midnight on new year's should include all sessions", t => {
-    const time = [2019, 0, 1, 0, 1, 1]
+// FIXME: this may or may-not include the 3D
+test("midnight on new year's should include all sessions", t => {
+    const time = [2019, 0, 1, 0, 0, 0]
     const date = new Date(moment.utc(time).format())
     t.deepEqual(defaultSessions.map(session.fromString), session(date))
 })
 
-test.todo("one second past midnight on new year's should include all default sessions")
+// FIXME: this may or may-not include the 3D
+test("one second past midnight on new year's should include all sessions", t => {
+    const time = [2019, 0, 1, 0, 0, 1]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual(defaultSessions.map(session.fromString), session(date))
+})
 
-test.todo("midnight on new year's should include all sessions included in search-parameters")
+test("midnight on new year's should include all sessions included in search-parameters", t => {
+    const time = [2019, 0, 1, 0, 0, 1]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual(defaultSessions.filter((s: string) => s.indexOf('H') > 0).map(session.fromString),
+                session(date, defaultSessions.filter((s: string) => s.indexOf('H') > 0)))
+})
+
+// TODO: test for even-resolution of 3D
+// TODO: test for even-resolution of 1W
