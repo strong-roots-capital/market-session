@@ -121,6 +121,14 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
         .map(fromString)
         .filter((period: number) => minutesIntoDay % period == 0)
 
+    // TODO: weekly closes (any number) only on Sunday night
+
+    // TODO: 3D candle is resolved to beginning of year (%3 daysIntoYear)
+
+    // TODO: yearly only on jan 1
+
+    // TODO: monthly only on 1st of month
+
     console.log('Closed sessions:\n', closed)
 
     return closed

@@ -7,9 +7,14 @@ const moment = require('moment')
 
 import session from '../src/market-session'
 
-const defaultSessions = [
-    '5', '15', '30', '60', '4H', '12H', '1D', '3D', '1W', '1M', '3M', '1Y'
-]
+const hourSessions = ['60', '4H', '12H']
+const daySessions = ['1D', '2D', '3D', '4D', '5D', '6D']
+const weekSessions = ['1W', '2W', '3w']
+const monthSessions = ['1M', '3M', '6M']
+const yearSessions = ['1Y', '2Y', '10Y']
+
+
+// Note: `time` expressed in [Y, M, D, H, min, sec]
 
 test('one minute past midnight should include no sessions', t => {
     const time = [2019, 0, 1, 0, 1]
@@ -35,26 +40,34 @@ test('one hour and one minute and one second past midnight should include no ses
     t.deepEqual([], session(date))
 })
 
-// FIXME: this may or may-not include the 3D
-test("midnight on new year's should include all sessions", t => {
+test("returned sessions should include only sessions included in search-parameters", t => {
+    const time = [2019, 0, 1, 0, 0, 1]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual(hourSessions.map(session.fromString), session(date, hourSessions))
+    t.deepEqual(daySessions.map(session.fromString), session(date, daySessions))
+    t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
+})
+
+test("midnight on new year's should include all hourly, daily, and monthly sessions", t => {
     const time = [2019, 0, 1, 0, 0, 0]
     const date = new Date(moment.utc(time).format())
-    t.deepEqual(defaultSessions.map(session.fromString), session(date))
+    t.deepEqual(hourSessions.map(session.fromString), session(date, hourSessions))
+    t.deepEqual(daySessions.map(session.fromString), session(date, daySessions))
+    t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
-// FIXME: this may or may-not include the 3D
-test("one second past midnight on new year's should include all sessions", t => {
+test("one second past midnight on new year's should include all hourly, daily, and monthly sessions", t => {
     const time = [2019, 0, 1, 0, 0, 1]
     const date = new Date(moment.utc(time).format())
-    t.deepEqual(defaultSessions.map(session.fromString), session(date))
+    t.deepEqual(hourSessions.map(session.fromString), session(date, hourSessions))
+    t.deepEqual(daySessions.map(session.fromString), session(date, daySessions))
+    t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
-test("midnight on new year's should include all sessions included in search-parameters", t => {
-    const time = [2019, 0, 1, 0, 0, 1]
-    const date = new Date(moment.utc(time).format())
-    t.deepEqual(defaultSessions.filter((s: string) => s.indexOf('H') > 0).map(session.fromString),
-                session(date, defaultSessions.filter((s: string) => s.indexOf('H') > 0)))
-})
+test.todo('daily sessions should end at midnight iff session is evenly-divisible into number of days into the year')
 
-// TODO: test for even-resolution of 3D
-// TODO: test for even-resolution of 1W
+test.todo('weekly sessions should end on Sunday at midnight (UTC time) iff session is evenly-divisible into number of weeks into the year')
+
+test.todo('monthly sessions should end on Sunday at midnight (UTC time) iff session is evenly-divisible into number of months into the year')
+
+test.todo('yearly sessions should end on January 1 iff session is evenly-divisible into number of years since Christ')
