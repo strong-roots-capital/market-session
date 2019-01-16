@@ -10,8 +10,7 @@ import { ArgumentError } from './argument-error'
  * Default session-resolutions to match against given date-times.
  */
 const defaultSessions = [
-    '5', '15', '30', '60', '240', '720', '1440', '1H',
-    '4H', '12H', '1D', '3D', '1W', '1M', '3M', '1Y'
+    '5', '15', '30', '60', '4H', '12H', '1D', '3D', '1W', '1M', '3M', '1Y'
 ]
 
 
@@ -110,11 +109,19 @@ function toString(session: number): string {
  */
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
 
-    let closed: number[] = []
 
-    // TODO: implement
-    const minutesIntoDay = date.getHours() * 60 + date.getMinutes()
+    const minutesIntoDay = date.getUTCHours() * MINUTES_IN_HOUR + date.getUTCMinutes()
+
+    console.log("Date is:", date)
+    console.log('getMinutes()', date.getUTCMinutes())
+    console.log('getHours()', date.getUTCHours())
     console.log('Minutes into day:', minutesIntoDay)
+
+    const closed: number[] = sessions
+        .map(fromString)
+        .filter((period: number) => minutesIntoDay % period == 0)
+
+    console.log('Closed sessions:\n', closed)
 
     return closed
 }
