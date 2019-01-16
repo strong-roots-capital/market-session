@@ -65,13 +65,27 @@ function fromString(session: string): number {
 }
 
 /**
- * DOCUMENT
+ * Convert a numeric representation of a market session into a human-readable
+ * string describing the session.
+ *
+ * If the number of minutes in a session are resolvable to a higher-timeframe,
+ * output will consist of a suffix denoting
+ *
+ * 'H'  => hours
+ * 'D'  => days
+ * 'W'  => weeks
+ * 'M'  => months
+ * 'Y'  => years
+ *
+ * Otherwise, the original session will be returned as a string.
  */
 function toString(session: number): string {
     ow(session, ow.number.greaterThan(0))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
         [(n: number) => n < 60 * 24 && n % 60 == 0, (n: number) => `${session/60}H`],
+        [(n: number) => n >= 60 * 24 * 7 && n % (60*24*7) == 0, (n: number) => `${session/(60*24*7)}W`],
+        [(n: number) => n >= 60 * 24 && n % (60*24) == 0, (n: number) => `${session/(60*24)}D`],
     ]
 
     for (const [predicate, translation] of translations) {
