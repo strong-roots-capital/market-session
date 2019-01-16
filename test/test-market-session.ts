@@ -30,8 +30,9 @@ test.skip("midnight on new year's should include all sessions", t => {
     t.deepEqual(defaultSessions.map(session.fromString), session(date))
 })
 
-test.todo("one second past midnight on new year's should include all sessions")
+test.skip("one second past midnight on new year's should include all default sessions", t => {
+    // RESUME:
+    t.pass()
+})
 
-test.todo("midnight on new year's should include only sessions included in search-parameters")
-
-// TODO: write tests
+test.todo("midnight on new year's should include all sessions included in search-parameters")

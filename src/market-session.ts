@@ -6,6 +6,9 @@
 import ow from 'ow'
 import { ArgumentError } from './argument-error'
 
+/**
+ * Default session-resolutions to match against given date-times.
+ */
 const defaultSessions = [
     '5', '15', '30', '60', '240', '720', '1440', '1H',
     '4H', '12H', '1D', '3D', '1W', '1M', '3M', '1Y'
@@ -13,7 +16,7 @@ const defaultSessions = [
 
 
 export interface Session {
-    (date: Date, sessions: string[]): number[];
+    (date: Date, sessions?: string[]): number[];
     fromString(session: string): number;
 }
 
@@ -36,42 +39,35 @@ function fromString(session: string): number {
 
     if (/^[1-9][0-9]*$/.test(session)) {
         resolution = parseInt(session)
-    }
-    else if (/^[1-9][0-9]*H$/.test(session)) {
+    } else if (/^[1-9][0-9]*H$/.test(session)) {
         resolution = parseInt(session) * 60
-    }
-    else if (/^[1-9][0-9]*D$/.test(session)) {
+    } else if (/^[1-9][0-9]*D$/.test(session)) {
         resolution = parseInt(session) * 60 * 24
-    }
-    else if (/^[1-9][0-9]*W$/.test(session)) {
+    } else if (/^[1-9][0-9]*W$/.test(session)) {
         resolution = parseInt(session) * 60 * 24 * 7
-    }
-    else if (/^[1-9][0-9]*M$/.test(session)) {
+    } else if (/^[1-9][0-9]*M$/.test(session)) {
         // TODO: verify this is the number used in each TradingView calendar month
         resolution = parseInt(session) * 60 * 24 * 7 * 30
-    }
-    else if (/^[1-9][0-9]*Y$/.test(session)) {
+    } else if (/^[1-9][0-9]*Y$/.test(session)) {
         // TODO: verify this is the number used in each TradingView calendar year
         resolution = parseInt(session) * 60 * 24 * 7 * 30 * 12
     }
-    /* handle the implicit-1 scenario */
+    /* Handle the implicit-1 scenario */
     else if (/^H$/.test(session)) {
         resolution = 60
-    }
-    else if (/^D$/.test(session)) {
+    } else if (/^D$/.test(session)) {
         resolution = 60 * 24
-    }
-    else if (/^W$/.test(session)) {
+    } else if (/^W$/.test(session)) {
         resolution = 60 * 24 * 7
-    }
-    else if (/^M$/.test(session)) {
+    } else if (/^M$/.test(session)) {
         resolution = 60 * 24 * 7 * 30
-    }
-    else if (/^Y$/.test(session)) {
+    } else if (/^Y$/.test(session)) {
         resolution = 60 * 24 * 7 * 30 * 12
     }
-    // Note: this block should never run. If you are seeing this
-    // error, the argument validation above is incorrect
+    /**
+     * Note: this block should never run. If you are seeing this
+     * error, the argument validation above is incorrect
+     */
     else {
         throw new ArgumentError(`Cannot interpret session interval '${session}'`, fromString)
     }
