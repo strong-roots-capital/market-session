@@ -20,6 +20,8 @@ export interface Session {
     fromString(session: string): number;
 }
 
+type Translation = [RegExp, (n: string) => number]
+
 
 /**
  * Convert a string-based representation of a market session into an
@@ -35,44 +37,32 @@ function fromString(session: string): number {
     ow(session, ow.string.not.empty)
     ow(session, ow.string.matches(/^[1-9]?[0-9]*[HDWMY]?$/))
 
-    let resolution: number = -1
-
-    if (/^[1-9][0-9]*$/.test(session)) {
-        resolution = parseInt(session)
-    } else if (/^[1-9][0-9]*H$/.test(session)) {
-        resolution = parseInt(session) * 60
-    } else if (/^[1-9][0-9]*D$/.test(session)) {
-        resolution = parseInt(session) * 60 * 24
-    } else if (/^[1-9][0-9]*W$/.test(session)) {
-        resolution = parseInt(session) * 60 * 24 * 7
-    } else if (/^[1-9][0-9]*M$/.test(session)) {
+    const translations: Translation[] = [
+        [/^[1-9][0-9]*$/, (n: string) => parseInt(n)],
+        [/^[1-9][0-9]*H$/, (n: string) => parseInt(n) * 60],
+        [/^[1-9][0-9]*D$/, (n: string) => parseInt(n) * 60 * 24],
+        [/^[1-9][0-9]*W$/, (n: string) => parseInt(n) * 60 * 24 * 7],
         // TODO: verify this is the number used in each TradingView calendar month
-        resolution = parseInt(session) * 60 * 24 * 7 * 30
-    } else if (/^[1-9][0-9]*Y$/.test(session)) {
+        [/^[1-9][0-9]*M$/, (n: string) => parseInt(n) * 60 * 24 * 7 * 30],
         // TODO: verify this is the number used in each TradingView calendar year
-        resolution = parseInt(session) * 60 * 24 * 7 * 30 * 12
+        [/^[1-9][0-9]*Y$/, (n: string) => parseInt(n) * 60 * 24 * 7 * 30 * 12],
+        [/^H$/, (n: string) => 60],
+        [/^D$/, (n: string) => 60 * 24],
+        [/^W$/, (n: string) => 60 * 24 * 7],
+        [/^M$/, (n: string) => 60 * 24 * 7 * 30],
+        [/^Y$/, (n: string) => 60 * 24 * 7 * 30 * 12]
+    ]
+
+    for (const [regex, translation] of translations) {
+        if (regex.test(session))
+            return translation(session)
     }
-    /* Handle the implicit-1 scenario */
-    else if (/^H$/.test(session)) {
-        resolution = 60
-    } else if (/^D$/.test(session)) {
-        resolution = 60 * 24
-    } else if (/^W$/.test(session)) {
-        resolution = 60 * 24 * 7
-    } else if (/^M$/.test(session)) {
-        resolution = 60 * 24 * 7 * 30
-    } else if (/^Y$/.test(session)) {
-        resolution = 60 * 24 * 7 * 30 * 12
-    }
+
     /**
      * Note: this block should never run. If you are seeing this
      * error, the argument validation above is incorrect
      */
-    else {
-        throw new ArgumentError(`Cannot interpret session interval '${session}'`, fromString)
-    }
-
-    return resolution
+    throw new ArgumentError(`Cannot interpret session interval '${session}'`, fromString)
 }
 
 /**
