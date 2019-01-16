@@ -28,6 +28,12 @@ test('one minute and one second past midnight should include no sessions', t => 
     t.deepEqual([], session(date))
 })
 
+test('one minute and one second past midnight should include one-minute session when added to search-able sessions', t => {
+    const time = [2019, 0, 1, 0, 1, 1]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual([1], session(date, ['1']))
+})
+
 test('one hour past midnight should include sessions up to one hour', t => {
     const time = [2019, 0, 1, 1]
     const date = new Date(moment.utc(time).format())
@@ -64,7 +70,12 @@ test("one second past midnight on new year's should include all hourly, daily, a
     t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
-test.todo('daily sessions should end at midnight iff session is evenly-divisible into number of days into the year')
+test('daily sessions should end at midnight iff session is evenly-divisible into number of days into the year', t => {
+    for (let day = 2; day < 31; ++day) {
+        t.deepEqual([session.fromString(`${day}D`)], session(new Date(moment.utc([2019, 0, day+1, 0, 0]).format()), [`${day}D`]))
+        t.deepEqual([], session(new Date(moment.utc([2019, 0, day, 0, 0]).format()), [`${day}D`]))
+    }
+})
 
 test.todo('weekly sessions should end on Sunday at midnight (UTC time) iff session is evenly-divisible into number of weeks into the year')
 

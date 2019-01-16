@@ -39,6 +39,7 @@ const MINUTES_IN_YEAR = 60 * 24 * 7 * 4 * 12
  * A string consisting only of a valid suffix-character will be
  * interpreted as having an implicit quantifier of 1.
  */
+// DISCUSS: how to handle '31D'?
 function fromString(session: string): number {
     ow(session, ow.string.not.empty)
     ow(session, ow.string.matches(/^[1-9]?[0-9]*[HDWMY]?$/))
@@ -107,31 +108,48 @@ function toString(session: number): string {
 /**
  * DOCUMENT
  */
+// DISCUSS: allowing sessions as string[] | number[]
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
+    // TODO: use `ow` to validate
+    // TODO: test that ow returns ArgumentError on invalid sessions
 
+    function isJanuaryFirst(d: Date): boolean {
+        return date.getUTCDate() == 1
+            && date.getUTCMonth() == 0
+            && date.getUTCDate() == 1
+            && date.getUTCHours() == 0
+            && date.getUTCMinutes() == 0
+    }
 
-    const minutesIntoDay = date.getUTCHours() * MINUTES_IN_HOUR + date.getUTCMinutes()
+    const minutesIntoYear =
+        date.getUTCMonth() * MINUTES_IN_MONTH
+        + (date.getUTCDate()-1) * MINUTES_IN_DAY
+        + date.getUTCHours() * MINUTES_IN_HOUR
+        + date.getUTCMinutes()
 
-    console.log("Date is:", date)
-    console.log('getMinutes()', date.getUTCMinutes())
-    console.log('getHours()', date.getUTCHours())
-    console.log('Minutes into day:', minutesIntoDay)
+    console.log("Date is:", date, 'looking for sessions', sessions)
+    console.log(`Date is ${minutesIntoYear} minutes into the year`)
 
-    const closed: number[] = sessions
-        .map(fromString)
-        .filter((period: number) => minutesIntoDay % period == 0)
+    const periods = sessions.map(fromString)
+
+    const closedNonYearlyPeriods: number[] = periods
+        .filter((period: number) => period < MINUTES_IN_YEAR)
+        .filter((period: number) => minutesIntoYear % period == 0)
+
+    // TODO: test that years are handled appropriately
+    // TODO: must handle years separately
+    const closedYearlyPeriods: number[] = periods
+        .filter((period: number) => period >= MINUTES_IN_YEAR)
+        .filter((period: number) => isJanuaryFirst(date) && date.getUTCFullYear() % (period / MINUTES_IN_YEAR) == 0)
 
     // TODO: weekly closes (any number) only on Sunday night
-
-    // TODO: 3D candle is resolved to beginning of year (%3 daysIntoYear)
-
-    // TODO: yearly only on jan 1
-
     // TODO: monthly only on 1st of month
 
-    console.log('Closed sessions:\n', closed)
+    console.log('Closed sub-year periods:', closedNonYearlyPeriods)
+    console.log('Closed super-year periods: ', closedYearlyPeriods)
 
-    return closed
+    const closedSessions: number [] = closedNonYearlyPeriods.concat(closedYearlyPeriods)
+    return closedSessions
 }
 
 
