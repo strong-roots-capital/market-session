@@ -47,10 +47,16 @@ test("midnight on new year's should include all monthly sessions", t => {
     t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
-test('one minute past midnight should include no sessions', t => {
+test('one minute past midnight should include no default-sessions', t => {
     const time = [2019, 0, 1, 0, 1]
     const date = new Date(moment.utc(time).format())
     t.deepEqual([], session(date))
+})
+
+test('one minute past midnight should include the one-minute session', t => {
+    const time = [2019, 0, 1, 0, 1]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual([1], session(date, ['1']))
 })
 
 test('one minute and one second past midnight should include no sessions', t => {
