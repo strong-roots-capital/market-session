@@ -31,7 +31,7 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 
 ## Limitations
 
-Note that periods of months in excess of one-year currently resolve to
-one-year intervals.
+All times are assumed to be UTC.
 
-For example, `18M` is equivalent to `1Y`.
+Note that periods of months in excess of one-year currently resolve to
+one-year intervals. For example, `18M` is equivalent to `1Y`.
