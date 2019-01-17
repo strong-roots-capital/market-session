@@ -5,6 +5,7 @@
 
 import ow from 'ow'
 import { ArgumentError } from './argument-error'
+const moment = require('moment')
 
 /**
  * Default session-resolutions to match against given date-times.
@@ -27,6 +28,49 @@ const MINUTES_IN_WEEK = 60 * 24 * 7
 const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
 // TODO: verify this is the number used in each TradingView calendar year
 const MINUTES_IN_YEAR = 60 * 24 * 7 * 4 * 12
+
+
+function isMidnight(date: Date): boolean {
+    return date.getUTCHours() == 0 && date.getUTCMinutes() == 0
+}
+
+function isNewYear(date: Date): boolean {
+    return date.getUTCDate() == 1
+        && date.getUTCMonth() == 0
+        && date.getUTCDate() == 1
+        && isMidnight(date)
+}
+
+function isNewWeek(date: Date): boolean {
+    return isMidnight(date) && date.getUTCDay() == 0
+}
+
+function isNewMonth(date: Date): boolean {
+    return date.getUTCDate() == 1 && isMidnight(date)
+}
+
+/**
+ * Returns the number of complete days that have already passed this year
+ */
+function getUTCDayIntoYear(date: Date): number {
+    return ((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+             - Date.UTC(date.getUTCFullYear(), 0, 0)) / 24 / 60 / 60 / 1000) - 1
+}
+
+function getUTCHoursIntoYear(date: Date): number {
+    return getUTCDayIntoYear(date) * 24 + date.getUTCHours()
+}
+
+function getUTCMinutesIntoYear(date: Date): number {
+    return date.getUTCMonth() * MINUTES_IN_MONTH
+        + (date.getUTCDate()-1) * MINUTES_IN_DAY
+        + date.getUTCHours() * MINUTES_IN_HOUR
+        + date.getUTCMinutes()
+}
+
+function onTheHour(date: Date): boolean {
+    return date.getUTCMinutes() == 0
+}
 
 
 /**
@@ -113,43 +157,41 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
     // TODO: use `ow` to validate
     // TODO: test that ow returns ArgumentError on invalid sessions
 
-    function isJanuaryFirst(d: Date): boolean {
-        return date.getUTCDate() == 1
-            && date.getUTCMonth() == 0
-            && date.getUTCDate() == 1
-            && date.getUTCHours() == 0
-            && date.getUTCMinutes() == 0
-    }
-
-    const minutesIntoYear =
-        date.getUTCMonth() * MINUTES_IN_MONTH
-        + (date.getUTCDate()-1) * MINUTES_IN_DAY
-        + date.getUTCHours() * MINUTES_IN_HOUR
-        + date.getUTCMinutes()
-
-    console.log("Date is:", date, 'looking for sessions', sessions)
-    console.log(`Date is ${minutesIntoYear} minutes into the year`)
+    // console.log("Date is:", date, 'looking for sessions', sessions)
 
     const periods = sessions.map(fromString)
+    let closed: number[] = []
 
-    const closedNonYearlyPeriods: number[] = periods
-        .filter((period: number) => period < MINUTES_IN_YEAR)
-        .filter((period: number) => minutesIntoYear % period == 0)
+    for (const rawSession of sessions) {
+        const period = fromString(rawSession)
+        const session = toString(period)
+        if (/Y$/.test(session)) {
+            const years = parseInt(session)
+            // console.log('>>> comparing to session', session, 'currently', date.getUTCFullYear(), 'looking for', years)
+            if (isNewYear(date) && date.getUTCFullYear() % years == 0) { closed.push(period) }
+        } else if (/M$/.test(session)) {
+            const months = parseInt(session)
+            // console.log('~~~ comparing to session', session, 'currently', 1 + date.getUTCMonth(), 'looking for', months)
+            if (isNewMonth(date) && ((1 + date.getUTCMonth()) % months == 0 || date.getUTCMonth() == 0)) { closed.push(period) }
+        } else if (/W$/.test(session)) {
+            const weeks = parseInt(session)
+            // console.log('--- comparing to session', session, 'currently', moment.utc(date).week(), 'looking for', weeks)
+            if (isNewWeek(date) && moment.utc(date).week() % weeks == 0) { closed.push(period) }
+        } else if (/D$/.test(session)) {
+            const days = parseInt(session)
+            // console.log('^^^ comparing to the day session:', session, 'currently', getUTCDayIntoYear(date), 'looking for', days)
+            if (isMidnight(date) && (getUTCDayIntoYear(date) % days == 0 || getUTCDayIntoYear(date) == 0)) { closed.push(period) }
+        } else if (/H$/.test(session)) {
+            const hours = parseInt(session)
+            // console.log('!!! comparing to the hour session:', session, 'currently', getUTCHoursIntoYear(date), 'looking for', hours)
+            if (onTheHour(date) && (getUTCHoursIntoYear(date) % hours == 0 || getUTCHoursIntoYear(date) == 0)) { closed.push(period) }
+        } else {
+            if (getUTCMinutesIntoYear(date) % period == 0) { closed.push(period) }
+        }
+    }
 
-    // TODO: test that years are handled appropriately
-    // TODO: must handle years separately
-    const closedYearlyPeriods: number[] = periods
-        .filter((period: number) => period >= MINUTES_IN_YEAR)
-        .filter((period: number) => isJanuaryFirst(date) && date.getUTCFullYear() % (period / MINUTES_IN_YEAR) == 0)
-
-    // TODO: weekly closes (any number) only on Sunday night
-    // TODO: monthly only on 1st of month
-
-    console.log('Closed sub-year periods:', closedNonYearlyPeriods)
-    console.log('Closed super-year periods: ', closedYearlyPeriods)
-
-    const closedSessions: number [] = closedNonYearlyPeriods.concat(closedYearlyPeriods)
-    return closedSessions
+    // console.log('Closed sessions:', closed)
+    return closed
 }
 
 

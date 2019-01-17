@@ -55,3 +55,13 @@ test('integers that divide evenly into 3628800 should return in units of years',
         t.is(`${years}Y`, session.toString(years * 60 * 24 * 7 * 4 * 12))
     }
 })
+
+
+// TODO: test that
+        // const period = fromString(rawSession)
+        // const session = toString(period)
+// will behave correctly
+
+// TODO: test that 90 becomes 90
+// TODO: test that 36H stays 36H
+// TODO: test that we reduce where appropriate, i.e. 48H becomes 2D
