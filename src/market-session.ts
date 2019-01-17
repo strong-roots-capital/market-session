@@ -150,9 +150,9 @@ function toString(session: number): string {
 
 
 /**
-
- * Return list of sessions that closed on Date (with minute-resolution)
-
+ * Return list of sessions that closed on Date (with minute-resolution).
+ * List of sessions is confined to `sessions`, which may be overridden
+ * with any sessions accepted by `fromString`.
  */
 // DISCUSS: allowing sessions as string[] | number[]
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
@@ -171,8 +171,8 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
             if (isNewYear(date) && date.getUTCFullYear() % years == 0) { closed.push(period) }
         } else if (/M$/.test(session)) {
             const months = parseInt(session)
-            // console.log('~~~ comparing to session', session, 'currently', 1 + date.getUTCMonth(), 'looking for', months)
-            if (isNewMonth(date) && ((1 + date.getUTCMonth()) % months == 0 || date.getUTCMonth() == 0)) { closed.push(period) }
+            // console.log('~~~ comparing to session', session, 'currently', date.getUTCMonth(), 'looking for', months)
+            if (isNewMonth(date) && (date.getUTCMonth() % months == 0 || date.getUTCMonth() == 0)) { closed.push(period) }
         } else if (/W$/.test(session)) {
             const weeks = parseInt(session)
             // console.log('--- comparing to session', session, 'currently', moment.utc(date).week(), 'looking for', weeks)

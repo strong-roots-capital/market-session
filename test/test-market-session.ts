@@ -35,7 +35,6 @@ test("thirty-six hours after midnight on new year's should include the thirty-si
     t.deepEqual([60 * 36], session(date, ['36H']))
 })
 
-
 test("midnight on new year's should include all daily sessions", t => {
     const time = [2019, 0, 1, 0, 0, 0]
     const date = new Date(moment.utc(time).format())
@@ -47,7 +46,6 @@ test("midnight on new year's should include all monthly sessions", t => {
     const date = new Date(moment.utc(time).format())
     t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
-
 
 test('one minute past midnight should include no sessions', t => {
     const time = [2019, 0, 1, 0, 1]
@@ -136,6 +134,22 @@ test('yearly sessions should end on January 1 iff session is evenly-divisible in
     t.deepEqual([], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['2Y']))
     t.deepEqual([session.fromString('2Y')], session(new Date(moment.utc([2020, 0, 1, 0, 0]).format()), ['2Y']))
     t.deepEqual([session.fromString('3Y')], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['3Y']))
+})
+
+test('second quarterly session should begin on April first', t => {
+    t.deepEqual([session.fromString('3M')], session(new Date(moment.utc([2019, 3, 1, 0, 0]).format()), ['3M']))
+})
+
+test('third quarterly session should begin on July first', t => {
+    t.deepEqual([session.fromString('3M')], session(new Date(moment.utc([2019, 6, 1, 0, 0]).format()), ['3M']))
+})
+
+test('fourth quarterly session should begin on October first', t => {
+    t.deepEqual([session.fromString('3M')], session(new Date(moment.utc([2019, 9, 1, 0, 0]).format()), ['3M']))
+})
+
+test('six-month session should begin on July first', t => {
+    t.deepEqual([session.fromString('6M')], session(new Date(moment.utc([2019, 6, 1, 0, 0]).format()), ['6M']))
 })
 
 test('should throw ArgumentError when given invalid sessions', t => {
