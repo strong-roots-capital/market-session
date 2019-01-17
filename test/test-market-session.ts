@@ -137,3 +137,9 @@ test('yearly sessions should end on January 1 iff session is evenly-divisible in
     t.deepEqual([session.fromString('2Y')], session(new Date(moment.utc([2020, 0, 1, 0, 0]).format()), ['2Y']))
     t.deepEqual([session.fromString('3Y')], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['3Y']))
 })
+
+test('should throw ArgumentError when given invalid sessions', t => {
+    const error = t.throws(() => {
+        session(new Date(), ['5b'])
+    }, Error)
+})

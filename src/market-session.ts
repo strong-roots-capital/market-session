@@ -150,12 +150,12 @@ function toString(session: number): string {
 
 
 /**
- * DOCUMENT
+
+ * Return list of sessions that closed on Date (with minute-resolution)
+
  */
 // DISCUSS: allowing sessions as string[] | number[]
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
-    // TODO: use `ow` to validate
-    // TODO: test that ow returns ArgumentError on invalid sessions
 
     // console.log("Date is:", date, 'looking for sessions', sessions)
 
