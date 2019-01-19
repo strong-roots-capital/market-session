@@ -5,7 +5,7 @@
 
 import ow from 'ow'
 import { ArgumentError } from './argument-error'
-const moment = require('moment')
+import moment from 'moment'
 
 /**
  * Default session-resolutions to match against given date-times.
