@@ -7,7 +7,7 @@
   "scripts": {
     "install": "tsc",
     "test": "nyc ava --tap | tap-nyc",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
     "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
     "typedoc": "typedoc"
@@ -40,8 +40,8 @@
   },
   "devDependencies": {
     "ava": "^1.0.0",
+    "codecov": "^3.1.0",
     "concurrently": "^4.1.0",
-    "coveralls": "^3.0.2",
     "husky": "^1.3.1",
     "nyc": "^13.1.0",
     "tap-nyc": "^1.0.3",
