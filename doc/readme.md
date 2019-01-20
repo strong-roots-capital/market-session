@@ -1,5 +1,5 @@
 
-market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) ![Code Coverage](https://img.shields.io/coveralls/github/strong-roots-capital/market-session.svg)
+market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) ![Code coverage](https://img.shields.io/codecov/c/github/strong-roots-capital/market-session.svg)
 ======================================================================================================================================================================================================================================================================================================================================================================================
 
 > Logic for financial-market sessions
