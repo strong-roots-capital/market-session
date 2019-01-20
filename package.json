@@ -6,11 +6,10 @@
   "types": "dist/market-session.d.ts",
   "scripts": {
     "install": "tsc",
-    "test": "ava --tap | tap-nyc",
-    "coverage": "del-cli dist && tsc && nyc npm test -- dist/test/**.js",
-    "test:watch": "npm test -- --watch",
-    "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
+    "test": "nyc ava --tap | tap-nyc",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
+    "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
     "typedoc": "typedoc && cp ./doc/typedoc/README.md ."
   },
   "husky": {
@@ -35,7 +34,6 @@
   "homepage": "https://github.com/strong-roots-capital/market-session",
   "dependencies": {
     "@types/node": "^10.12.18",
-    "del-cli": "^1.1.0",
     "moment": "^2.23.0",
     "ow": "^0.10.0",
     "typescript": "^3.2.2"
@@ -66,16 +64,16 @@
   },
   "nyc": {
     "include": [
-        "src/*.ts"
+      "src/*.ts"
     ],
     "exclude": [
-        "typings"
+      "typings"
     ],
     "extension": [
-        ".ts"
+      ".ts"
     ],
     "require": [
-        "ts-node/register"
+      "ts-node/register"
     ]
   }
 }
