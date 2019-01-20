@@ -1,20 +1,16 @@
-
-market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) [![Coverage Status](https://coveralls.io/repos/github/strong-roots-capital/market-session/badge.svg)](https://coveralls.io/github/strong-roots-capital/market-session)
-===========================================================================================================================================================================================================================================================================================================================================================================================================================================================
+# market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) ![Code Coverage](https://img.shields.io/coveralls/github/strong-roots-capital/market-session.svg)
 
 > Logic for financial-market sessions
 
-Install
--------
+## Install
 
-```shell
+``` shell
 npm install market-session
 ```
 
-Use
----
+## Use
 
-```typescript
+``` typescript
 import session from 'market-session'
 
 console.log(session.fromString('D'))
@@ -33,18 +29,9 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 //=> ['3M']
 ```
 
-Limitations
------------
+## Limitations
 
-*   All times are assumed to be UTC.
-    
-*   Note that periods of months in excess of one-year currently resolve to one-year intervals. For example, `18M` is equivalent to `1Y`.
+- All times are assumed to be UTC.
 
-## Index
-
-### Interfaces
-
-* [Session](interfaces/session.md)
-
----
-
+- Note that periods of months in excess of one-year currently resolve
+  to one-year intervals. For example, `18M` is equivalent to `1Y`.
