@@ -8,3 +8,4 @@ flycheck_*
 /dist/
 /package-lock.json
 /scratch/
+/.nyc_output

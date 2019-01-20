@@ -6,7 +6,8 @@
   "types": "dist/market-session.d.ts",
   "scripts": {
     "install": "tsc",
-    "test": "ava",
+    "test": "ava test",
+    "coverage": "del-cli dist && tsc && nyc npm test -- dist/test/**.js",
     "test:watch": "npm test -- --watch",
     "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
@@ -34,6 +35,7 @@
   "homepage": "https://github.com/strong-roots-capital/market-session",
   "dependencies": {
     "@types/node": "^10.12.18",
+    "del-cli": "^1.1.0",
     "moment": "^2.23.0",
     "ow": "^0.10.0",
     "typescript": "^3.2.2"
@@ -41,18 +43,32 @@
   "devDependencies": {
     "ava": "^1.0.0",
     "concurrently": "^4.1.0",
+    "coveralls": "^3.0.2",
     "husky": "^1.3.1",
+    "nyc": "^13.1.0",
     "ts-node": "^7.0.1",
     "typedoc": "^0.13.0",
     "typedoc-plugin-markdown": "^1.1.20"
   },
   "ava": {
     "compileEnhancements": false,
+    "files": [
+      "!dist/**/*.d.ts"
+    ],
     "extensions": [
       "ts"
     ],
     "require": [
       "ts-node/register"
+    ]
+  },
+  "nyc": {
+    "include": [
+      "dist/src/*.js"
+    ],
+    "exclude": [
+      "dist/**/*.d.ts",
+      "dist/src/argument-error.*"
     ]
   }
 }
