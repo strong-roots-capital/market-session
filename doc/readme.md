@@ -1,4 +1,4 @@
-# market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) [![npm](https://img.shields.io/npm/dt/market-session.svg)](https://www.npmjs.com/package/market-session)
+# market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) [![Coverage Status](https://coveralls.io/repos/github/strong-roots-capital/market-session/badge.svg)](https://coveralls.io/github/strong-roots-capital/market-session)
 
 > Logic for financial-market sessions
 
@@ -31,7 +31,7 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 
 ## Limitations
 
-All times are assumed to be UTC.
+- All times are assumed to be UTC.
 
-Note that periods of months in excess of one-year currently resolve to
-one-year intervals. For example, `18M` is equivalent to `1Y`.
+- Note that periods of months in excess of one-year currently resolve
+  to one-year intervals. For example, `18M` is equivalent to `1Y`.
