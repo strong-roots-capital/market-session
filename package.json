@@ -6,6 +6,8 @@
   "types": "dist/market-session.d.ts",
   "scripts": {
     "install": "tsc",
+    "ava": "ava",
+    "watch:ava": "nodemon -e 'ts json' -x 'npm run ava || true'",
     "test": "nyc ava --tap | tap-nyc",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",

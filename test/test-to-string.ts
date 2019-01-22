@@ -11,9 +11,8 @@ test('should throw ArgumentError when passed a number less-than one', t => {
     testStrings.forEach((session) => {
         const error = t.throws(() => {
             session.toString(session)
-        // TODO: try to import and compare to argumenterror
         }, Error)
-        // t.deepEqual(error.message, `Expected number to be greater than 0, got ${session}`)
+        t.is(error.name, 'RangeError')
     })
 })
 
@@ -56,12 +55,11 @@ test('integers that divide evenly into 3628800 should return in units of years',
     }
 })
 
+test('conversions fromString -> toString should remain consistent', t => {
+    t.is('90', session.toString(session.fromString('90')))
+    t.is('36H', session.toString(session.fromString('36H')))
+})
 
-// TODO: test that
-        // const period = fromString(rawSession)
-        // const session = toString(period)
-// will behave correctly
-
-// TODO: test that 90 becomes 90
-// TODO: test that 36H stays 36H
-// TODO: test that we reduce where appropriate, i.e. 48H becomes 2D
+test('conversions fromString -> toString should reduce units with higher timeframes', t => {
+    t.is('2D', session.toString(session.fromString('48H')))
+})

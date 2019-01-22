@@ -133,11 +133,11 @@ function toString(session: number): string {
     ow(session, ow.number.greaterThan(0))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
-        [(n: number) => n < MINUTES_IN_DAY && n % MINUTES_IN_HOUR == 0, (n: number) => `${session/MINUTES_IN_HOUR}H`],
         [(n: number) => n >= MINUTES_IN_YEAR && n % MINUTES_IN_YEAR == 0, (n: number) => `${session/MINUTES_IN_YEAR}Y`],
         [(n: number) => n >= MINUTES_IN_MONTH && n % MINUTES_IN_MONTH == 0, (n: number) => `${session/MINUTES_IN_MONTH}M`],
         [(n: number) => n >= MINUTES_IN_WEEK && n % MINUTES_IN_WEEK == 0, (n: number) => `${session/MINUTES_IN_WEEK}W`],
         [(n: number) => n >= MINUTES_IN_DAY && n % MINUTES_IN_DAY == 0, (n: number) => `${session/MINUTES_IN_DAY}D`],
+        [(n: number) => n >= MINUTES_IN_HOUR && n % MINUTES_IN_HOUR == 0, (n: number) => `${session/MINUTES_IN_HOUR}H`],
     ]
 
     for (const [predicate, translation] of translations) {
