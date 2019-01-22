@@ -12,7 +12,8 @@
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
     "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
-    "typedoc": "typedoc"
+    "typedoc": "typedoc",
+    "push-and-publish": "git push origin master && git push origin --tags && npm publish"
   },
   "husky": {
     "hooks": {
