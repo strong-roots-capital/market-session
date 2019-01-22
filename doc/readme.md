@@ -1,6 +1,6 @@
 
-market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) ![Code coverage](https://img.shields.io/codecov/c/github/strong-roots-capital/market-session.svg)
-======================================================================================================================================================================================================================================================================================================================================================================================
+market-session [![Build Status](https://travis-ci.org/strong-roots-capital/market-session.svg?branch=master)](https://travis-ci.org/strong-roots-capital/market-session) [![npm version](https://img.shields.io/npm/v/market-session.svg)](https://npmjs.org/package/market-session) [![Code coverage](https://img.shields.io/codecov/c/github/strong-roots-capital/market-session.svg)](https://codecov.io/gh/strong-roots-capital/market-session)
+===================================================================================================================================================================================================================================================================================================================================================================================================================================================
 
 > Logic for financial-market sessions
 
@@ -37,6 +37,8 @@ Limitations
 -----------
 
 *   All times are assumed to be UTC.
+    
+*   The [Trading View](https://www.tradingview.com) format is used for expressing timeframes.
     
 *   Note that periods of months in excess of one-year currently resolve to one-year intervals. For example, `18M` is equivalent to `1Y`.
 
