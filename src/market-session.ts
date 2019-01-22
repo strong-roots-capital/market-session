@@ -159,7 +159,11 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
 
     // console.log("Date is:", date, 'looking for sessions', sessions)
 
-    const periods = sessions.map(fromString)
+    /**
+     * Validate parameters
+     */
+    sessions.map(fromString)
+
     let closed: number[] = []
 
     for (const rawSession of sessions) {
