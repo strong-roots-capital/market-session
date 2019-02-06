@@ -95,11 +95,11 @@ function fromString(session: string): number {
         [/^[1-9][0-9]*W$/, (n: string) => parseInt(n) * MINUTES_IN_WEEK],
         [/^[1-9][0-9]*M$/, (n: string) => parseInt(n) * MINUTES_IN_MONTH],
         [/^[1-9][0-9]*Y$/, (n: string) => parseInt(n) * MINUTES_IN_YEAR],
-        [/^H$/, (n: string) => MINUTES_IN_HOUR],
-        [/^D$/, (n: string) => MINUTES_IN_DAY],
-        [/^W$/, (n: string) => MINUTES_IN_WEEK],
-        [/^M$/, (n: string) => MINUTES_IN_MONTH],
-        [/^Y$/, (n: string) => MINUTES_IN_YEAR]
+        [/^H$/, () => MINUTES_IN_HOUR],
+        [/^D$/, () => MINUTES_IN_DAY],
+        [/^W$/, () => MINUTES_IN_WEEK],
+        [/^M$/, () => MINUTES_IN_MONTH],
+        [/^Y$/, () => MINUTES_IN_YEAR]
     ]
 
     for (const [regex, translation] of translations) {
@@ -133,11 +133,11 @@ function toString(session: number): string {
     ow(session, ow.number.greaterThan(0))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
-        [(n: number) => n >= MINUTES_IN_YEAR && n % MINUTES_IN_YEAR == 0, (n: number) => `${session/MINUTES_IN_YEAR}Y`],
-        [(n: number) => n >= MINUTES_IN_MONTH && n % MINUTES_IN_MONTH == 0, (n: number) => `${session/MINUTES_IN_MONTH}M`],
-        [(n: number) => n >= MINUTES_IN_WEEK && n % MINUTES_IN_WEEK == 0, (n: number) => `${session/MINUTES_IN_WEEK}W`],
-        [(n: number) => n >= MINUTES_IN_DAY && n % MINUTES_IN_DAY == 0, (n: number) => `${session/MINUTES_IN_DAY}D`],
-        [(n: number) => n >= MINUTES_IN_HOUR && n % MINUTES_IN_HOUR == 0, (n: number) => `${session/MINUTES_IN_HOUR}H`],
+        [(n: number) => n >= MINUTES_IN_YEAR && n % MINUTES_IN_YEAR == 0, (n: number) => `${n/MINUTES_IN_YEAR}Y`],
+        [(n: number) => n >= MINUTES_IN_MONTH && n % MINUTES_IN_MONTH == 0, (n: number) => `${n/MINUTES_IN_MONTH}M`],
+        [(n: number) => n >= MINUTES_IN_WEEK && n % MINUTES_IN_WEEK == 0, (n: number) => `${n/MINUTES_IN_WEEK}W`],
+        [(n: number) => n >= MINUTES_IN_DAY && n % MINUTES_IN_DAY == 0, (n: number) => `${n/MINUTES_IN_DAY}D`],
+        [(n: number) => n >= MINUTES_IN_HOUR && n % MINUTES_IN_HOUR == 0, (n: number) => `${n/MINUTES_IN_HOUR}H`],
     ]
 
     for (const [predicate, translation] of translations) {
@@ -145,7 +145,7 @@ function toString(session: number): string {
             return translation(session)
     }
 
-    return session.toString()
+    return session.toString(10)
 }
 
 
