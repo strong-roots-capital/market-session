@@ -29,6 +29,8 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 //=> ['3M']
 ```
 
+TODO: add examples of isMostRecent to readme
+
 ## Limitations
 
 - All times are assumed to be UTC.

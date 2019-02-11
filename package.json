@@ -8,7 +8,8 @@
     "install": "tsc",
     "ava": "ava",
     "watch:ava": "nodemon -e 'ts json' -x 'npm run ava || true'",
-    "test": "nyc ava --tap | tap-nyc",
+    "test": "nyc ava",
+    "test:tap": "nyc ava --tap | tap-nyc",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
     "dev": "concurrently \"tsc -w\" \"nodemon -e 'ts json' -x 'npm test || true'\"",
@@ -36,6 +37,9 @@
   },
   "homepage": "https://github.com/strong-roots-capital/market-session",
   "dependencies": {
+    "@hamroctopus/utc-date": "^1.0.5",
+    "@sindresorhus/is": "^0.15.0",
+    "@strong-roots-capital/is-tradingview-format": "^1.0.0",
     "@types/node": "^10.12.18",
     "moment": "^2.23.0",
     "ow": "^0.10.0",
@@ -56,7 +60,7 @@
     "compileEnhancements": false,
     "files": [
       "!dist/**/*.d.ts",
-      "test/**/*.ts"
+      "test/test*.ts"
     ],
     "extensions": [
       "ts"

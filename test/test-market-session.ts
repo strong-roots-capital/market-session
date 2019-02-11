@@ -1,5 +1,5 @@
 import test from 'ava'
-const moment = require('moment')
+import moment from 'moment'
 
 /**
  * Library under test
@@ -12,10 +12,9 @@ const hourSessions = ['60', '4H', '12H']
 const daySessions = ['D', '2D', '3D', '4D', '5D', '6D']
 const weekSessions = ['W', '2W', '3w']
 const monthSessions = ['M', '3M', '6M']
-const yearSessions = ['Y', '2Y', '10Y']
 
 
-// Note: `time` expressed in [Y, M, D, H, min, sec]
+// Note: `time` expressed in [M, D, H, min, sec]
 
 test("midnight on new year's should include all hourly sessions", t => {
     const time = [2019, 0, 1, 0, 0, 0]
@@ -26,13 +25,13 @@ test("midnight on new year's should include all hourly sessions", t => {
 test("midnight on new year's should include all hourly sessions, even non-standard ones", t => {
     const time = [2019, 0, 1, 0, 0, 0]
     const date = new Date(moment.utc(time).format())
-    t.deepEqual([60 * 36], session(date, ['36H']))
+    t.deepEqual([60 * 9], session(date, ['9H']))
 })
 
-test("thirty-six hours after midnight on new year's should include the thirty-six hour session", t => {
-    const time = [2019, 0, 2, 12, 0, 0]
+test("nine hours after midnight on new year's should include the nine hour session", t => {
+    const time = [2019, 0, 1, 9, 0, 0]
     const date = new Date(moment.utc(time).format())
-    t.deepEqual([60 * 36], session(date, ['36H']))
+    t.deepEqual([60 * 9], session(date, ['9H']))
 })
 
 test("midnight on new year's should include all daily sessions", t => {
@@ -132,14 +131,6 @@ test('weekly sessions should end on Sunday at midnight (UTC time) iff session is
     t.deepEqual([], session(new Date(moment.utc([2018, 0, 1, 0, 0]).format()), ['1W']))
     // 2017: Jan 1 => Sunday
     t.deepEqual([60 * 24 * 7], session(new Date(moment.utc([2017, 0, 1, 0, 0]).format()), ['1W']))
-})
-
-test('yearly sessions should end on January 1 iff session is evenly-divisible into number of years since Christ', t => {
-    t.deepEqual([session.fromString('Y')], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['Y']))
-    t.deepEqual([session.fromString('1Y')], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['Y']))
-    t.deepEqual([], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['2Y']))
-    t.deepEqual([session.fromString('2Y')], session(new Date(moment.utc([2020, 0, 1, 0, 0]).format()), ['2Y']))
-    t.deepEqual([session.fromString('3Y')], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['3Y']))
 })
 
 test('second quarterly session should begin on April first', t => {
