@@ -1,14 +1,12 @@
 import test, { Macro } from 'ava'
 import { range } from './utils'
-import moment from 'moment'
+import * as moment from 'moment'
 
 /**
  * Library under test
  */
 
 import session from '../src/market-session'
-
-const HOURS_IN_DAY = 24
 
 const beginningOfDay = moment.utc('2019-02-08T00:00:00.000Z')
 
@@ -58,7 +56,7 @@ function hourTest(timeframe: number, startHour: number) {
  */
 export function testHourSessions(startHour: number, endHour: number = startHour) {
     range(startHour, endHour)
-        .map(timeframe => range(timeframe, HOURS_IN_DAY + timeframe).map(startHour => [timeframe, startHour]))
+        .map(timeframe => range(timeframe, moment.duration(1, 'day').as('hours') + timeframe).map(startHour => [timeframe, startHour]))
         .reduce((a, b) => a.concat(b))
         .forEach(t => hourTest(t[0], t[1]))
 }

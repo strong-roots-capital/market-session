@@ -8,7 +8,7 @@
 import ow from 'ow'
 import is from '@sindresorhus/is'
 import { ArgumentError } from './argument-error'
-import moment from 'moment'
+import * as moment from 'moment'
 import { utcDate } from '@hamroctopus/utc-date'
 import isTradingviewFormat from '@strong-roots-capital/is-tradingview-format'
 
@@ -35,7 +35,6 @@ const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
 const inTradingviewFormat = (s: string): boolean | string => isTradingviewFormat(s) || `Expected string ${s} to be in Trading View format`
 
 const isNew = (duration: moment.unitOfTime.DurationConstructor, date: Date): boolean => moment.utc(date).startOf('minute').isSame(moment.utc(date).startOf(duration))
-const crossedDayBoundary = (m1: moment.Moment, m2: moment.Moment) => !m1.isSame(m2, 'day')
 
 const getUTCDayIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'days')
 const getUTCHoursIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'hours')
@@ -83,38 +82,106 @@ const isMinutely = (session: number) => Number.isInteger(session)
 
 /* Note: quantifiers ignored over 12 */
 // TODO: implement from
-const isMonthlyOpen = (session: number, open: Date, from: moment.Moment): boolean => {
-    const cap = 12 // months
-    const quantifier = session / MINUTES_IN_MONTH
-    return quantifier >= cap
-        ? startOfPrevious('month').month() === 0
-        : Array.from(new Array(cap).keys()).filter(n => n % quantifier == 0).includes(open.getUTCMonth())
+const isMonthlyOpen = (quantifier: number, open: Date, from: Date): boolean => {
+    const now = moment.utc(from)
+    const clock = now.clone().subtract(1, 'year').startOf('year')
+    let clockStart = clock.clone()
+
+    let sessions: moment.Moment[] = []
+    // console.log(now.diff(clock, 'month'))
+    while (quantifier <= now.diff(clock, 'month') || !clock.isSame(now, 'year')) {
+        // console.log(clock.toDate(), now.diff(clock, 'month'))
+        sessions.push(clock.clone())
+        clock.add(quantifier, 'month')
+        if (!clock.isSame(clockStart, 'year')) {
+            // console.log('Resetting this clockStart')
+            clock.startOf('year')
+            clockStart = clock.clone()
+        }
+    }
+    // console.log('>', clock.toDate(), now.diff(clock, 'month'))
+    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    const mostRecentOpen = sessions[sessions.length-1]
+    return mostRecentOpen.isSame(open)
 }
 
 // TODO: test and fix: is the MOST RECENT candle
 /* Note: quantifiers ignored over 52 */
-const isWeeklyOpen = (session: number, open: Date, from: moment.Moment) => {
-    const cap = 52 // weeks
-    const quantifier = session / MINUTES_IN_WEEK
-    // console.log('Quantifier is', quantifier)
-    // console.log('everyNthWeek is', everyNthWeekOfYear(quantifier).map(m => m.toDate()))
-    // console.log('open is', open)
-    return quantifier >= cap
-        ? firstFullWeekOfNewYear().isSame(open)
-        : everyNthWeekOfYear(quantifier).filter(m => m.isSameOrBefore(from.toDate())).filter(m => m.isSame(open)).length > 0
+const isWeeklyOpen = (session: number, open: Date, from: Date) => {
+    return isSubYearlySessionOpen(session, 'week', open, from)
 }
 
 // TODO: test and fix: is the MOST RECENT candle
 /* Note: quantifiers ignored over 364 */
-function isDailyOpen(session: number, open: Date, from: moment.Moment) {
-    const cap = 366
-    const quantifier = session / MINUTES_IN_DAY
-    // console.log('Daily quantifier is', quantifier)
-    // console.log('Day into year', getUTCDayIntoYear(open))
-    return quantifier >= cap
-        ? moment.utc().startOf('year').isSame(open)
-        : Array.from(new Array(cap).keys()).filter(n => n % quantifier == 0).includes(getUTCDayIntoYear(open))
-    // return moment.utc().subtract(1, 'day').startOf('day').isSame(open)
+function isDailyOpen(session: number, open: Date, from: Date) {
+    return isSubYearlySessionOpen(session, 'day', open, from)
+}
+
+/**
+ * DOCUMENT
+ */
+function isSubYearlySessionOpen(session: number,
+                               duration: moment.unitOfTime.DurationConstructor,
+                               open: Date,
+                               from: Date) {
+
+    const quantifier = session / moment.duration(1, duration).as('minutes')
+    const now = moment.utc(from)
+    const clock = now.clone().subtract(1, 'year').startOf('year')
+    let clockStart = clock.clone()
+
+    let sessions: moment.Moment[] = []
+    // console.log(now.diff(clock, duration))
+    while (quantifier <= now.diff(clock, duration) || !clock.isSame(now, 'year')) {
+        // console.log(clock.toDate(), now.diff(clock, duration))
+        sessions.push(clock.clone())
+        clock.add(quantifier, duration)
+        if (!clock.isSame(clockStart, 'year')) {
+            // console.log('Resetting this clockStart')
+            clock.startOf('year')
+            clockStart = clock.clone()
+        }
+    }
+    // console.log('>', clock.toDate(), now.diff(clock, duration))
+    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    const mostRecentOpen = sessions[sessions.length-1]
+    return mostRecentOpen.isSame(open)
+}
+
+/**
+ * DOCUMENT
+ */
+function isSubDailySessionOpen(session: number,
+                               duration: moment.unitOfTime.DurationConstructor,
+                               open: Date,
+                               from: Date) {
+
+    // const nextSmallestDuration: { [key: string]: moment.unitOfTime.Base } = {
+    //     'minutes': 'minutes',
+    //     'hours': 'minutes'
+    // }
+
+    const quantifier = session / moment.duration(1, duration).as('minutes')
+    const now = moment.utc(from)
+    const clock = now.clone().subtract(1, 'day').startOf('day')
+    let clockStart = clock.clone()
+
+    let sessions: moment.Moment[] = []
+    // console.log(now.diff(clock, duration))
+    while (quantifier <= now.diff(clock, duration) || !clock.isSame(now, 'date')) {
+        // console.log(clock.toDate(), now.diff(clock, duration))
+        sessions.push(clock.clone())
+        clock.add(quantifier, duration)
+        if (!clock.isSame(clockStart, 'date')) {
+            // console.log('Resetting this clockStart')
+            clock.startOf('day')
+            clockStart = clock.clone()
+        }
+    }
+    // console.log('>', clock.toDate(), now.diff(clock, duration))
+    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    const mostRecentOpen = sessions[sessions.length-1]
+    return mostRecentOpen.isSame(open)
 }
 
 // TODO: test and fix: is the MOST RECENT candle
@@ -126,26 +193,27 @@ function isDailyOpen(session: number, open: Date, from: moment.Moment) {
  * @param from - Date used as current time, to aid with testing
  */
 function isHourlyOpen(session: number, open: Date, from: Date) {
-    const quantifier = session / MINUTES_IN_HOUR
-    const clock = moment.utc(from).subtract(1, 'day').startOf('day')
-    let clockStart = clock.clone()
-    let sessions: moment.Moment[] = []
+    return isSubDailySessionOpen(session, 'hours', open, from)
+    // const quantifier = session / MINUTES_IN_HOUR
+    // const clock = moment.utc(from).subtract(1, 'day').startOf('day')
+    // let clockStart = clock.clone()
 
-    // console.log(moment.utc(from).diff(clock, 'hours'))
-    while (quantifier <= moment.utc(from).diff(clock, 'hours') || crossedDayBoundary(clock, moment.utc(from))) {
-        // console.log(clock.toDate(), moment.utc(from).diff(clock, 'hours'))
-        sessions.push(clock.clone())
-        clock.add(quantifier, 'hours')
-        if (crossedDayBoundary(clock, clockStart)) {
-            // console.log('Resetting this clockStart')
-            clock.startOf('day')
-            clockStart = clock.clone()
-        }
-    }
-    // console.log('>', clock.toDate(), moment.utc(from).diff(clock, 'hours'))
-    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    const mostRecentOpen = sessions[sessions.length-1]
-    return mostRecentOpen.isSame(open)
+    // let sessions: moment.Moment[] = []
+    // // console.log(moment.utc(from).diff(clock, 'hours'))
+    // while (quantifier <= moment.utc(from).diff(clock, 'hours') || crossedDayBoundary(clock, moment.utc(from))) {
+    //     // console.log(clock.toDate(), moment.utc(from).diff(clock, 'hours'))
+    //     sessions.push(clock.clone())
+    //     clock.add(quantifier, 'hours')
+    //     if (crossedDayBoundary(clock, clockStart)) {
+    //         // console.log('Resetting this clockStart')
+    //         clock.startOf('day')
+    //         clockStart = clock.clone()
+    //     }
+    // }
+    // // console.log('>', clock.toDate(), moment.utc(from).diff(clock, 'hours'))
+    // // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    // const mostRecentOpen = sessions[sessions.length-1]
+    // return mostRecentOpen.isSame(open)
 }
 
 /**
@@ -155,26 +223,27 @@ function isHourlyOpen(session: number, open: Date, from: Date) {
  * @param from - Date used as current time, to aid with testing
  */
 function isMinutelyOpen(session: number, open: Date, from: Date) {
-    const quantifier = session
-    const clock = moment.utc(from).subtract(1, 'day').startOf('day')
-    let clockStart = clock.clone()
+    return isSubDailySessionOpen(session, 'minutes', open, from)
+    // const quantifier = session
+    // const clock = moment.utc(from).subtract(1, 'day').startOf('day')
+    // let clockStart = clock.clone()
 
-    let sessions: moment.Moment[] = []
-    // console.log(moment.utc(from).diff(clock, 'minutes'))
-    while (quantifier <= moment.utc(from).diff(clock, 'minutes') || crossedDayBoundary(clock, moment.utc(from))) {
-        // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
-        sessions.push(clock.clone())
-        clock.add(quantifier, 'minutes')
-        if (crossedDayBoundary(clock, clockStart)) {
-            // console.log('Resetting this clockStart')
-            clock.startOf('day')
-            clockStart = clock.clone()
-        }
-    }
-    // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
-    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    const mostRecentOpen = sessions[sessions.length-1]
-    return mostRecentOpen.isSame(open)
+    // let sessions: moment.Moment[] = []
+    // // console.log(moment.utc(from).diff(clock, 'minutes'))
+    // while (quantifier <= moment.utc(from).diff(clock, 'minutes') || crossedDayBoundary(clock, moment.utc(from))) {
+    //     // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
+    //     sessions.push(clock.clone())
+    //     clock.add(quantifier, 'minutes')
+    //     if (crossedDayBoundary(clock, clockStart)) {
+    //         // console.log('Resetting this clockStart')
+    //         clock.startOf('day')
+    //         clockStart = clock.clone()
+    //     }
+    // }
+    // // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
+    // // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    // const mostRecentOpen = sessions[sessions.length-1]
+    // return mostRecentOpen.isSame(open)
 }
 
 
@@ -290,13 +359,10 @@ function isMostRecent(session: string, dateOrTime: Date | number, from: Date = u
 
     const sessionLength = fromString(session)
 
-    // FIXME: refactor this away
-    const fromMoment = moment.utc(from)
-
     const translations: [(n: number) => boolean, (n: Date) => boolean][] = [
-        [isMonthly, (open) => isMonthlyOpen(sessionLength, open, fromMoment)],
-        [isWeekly, (open) => isWeeklyOpen(sessionLength, open, fromMoment)],
-        [isDaily, (open) => isDailyOpen(sessionLength, open, fromMoment)],
+        [() => /M$/.test(session), (open) => isMonthlyOpen(parseInt(session), open, from)],
+        [isWeekly, (open) => isWeeklyOpen(sessionLength, open, from)],
+        [isDaily, (open) => isDailyOpen(sessionLength, open, from)],
         [isHourly, (open) => isHourlyOpen(sessionLength, open, from)],
         [isMinutely, (open) => isMinutelyOpen(sessionLength, open, from)],
     ]

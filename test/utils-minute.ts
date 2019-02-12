@@ -1,6 +1,6 @@
 import test, { Macro } from 'ava'
 import { range } from './utils'
-import moment from 'moment'
+import * as moment from 'moment'
 
 /**
  * Library under test
@@ -61,7 +61,7 @@ function minuteTest(timeframe: number, startMinute: number) {
 export function testMinuteSessions(startMinute: number, endMinute: number = startMinute) {
     range(startMinute, endMinute)
         .filter(timeframe => !isHourly(timeframe))
-        .map(timeframe => range(timeframe, MINUTES_IN_DAY + timeframe).map(startMinute => [timeframe, startMinute]))
+        .map(timeframe => range(timeframe, moment.duration(1, 'day').as('minutes') + timeframe).map(startMinute => [timeframe, startMinute]))
         .reduce((a, b) => a.concat(b))
         .forEach(t => minuteTest(t[0], t[1]))
 }
