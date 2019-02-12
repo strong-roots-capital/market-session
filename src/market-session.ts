@@ -35,6 +35,8 @@ const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
 const inTradingviewFormat = (s: string): boolean | string => isTradingviewFormat(s) || `Expected string ${s} to be in Trading View format`
 
 const isNew = (duration: moment.unitOfTime.DurationConstructor, date: Date): boolean => moment.utc(date).startOf('minute').isSame(moment.utc(date).startOf(duration))
+const crossedDayBoundary = (m1: moment.Moment, m2: moment.Moment) => !m1.isSame(m2, 'day')
+
 const getUTCDayIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'days')
 const getUTCHoursIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'hours')
 const getUTCMinutesIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'minutes')
@@ -117,32 +119,37 @@ function isDailyOpen(session: number, open: Date, from: moment.Moment) {
 
 // TODO: test and fix: is the MOST RECENT candle
 // TODO: test backwards across the day-boundary
+/**
+ * True if `open` is the most-recent completed `session`-hour session-open.
+ * @param session - Session length in minutes
+ * @param open - Date under test
+ * @param from - Date used as current time, to aid with testing
+ */
 function isHourlyOpen(session: number, open: Date, from: Date) {
     const quantifier = session / MINUTES_IN_HOUR
-    const clock = moment.utc(from).startOf('day')
+    const clock = moment.utc(from).subtract(1, 'day').startOf('day')
+    let clockStart = clock.clone()
     let sessions: moment.Moment[] = []
 
-    console.log(moment.utc(from).diff(clock, 'hours'))
-    while (quantifier <= moment.utc(from).diff(clock, 'hours')) {
-        console.log(clock.toDate(), moment.utc(from).diff(clock, 'hours'))
+    // console.log(moment.utc(from).diff(clock, 'hours'))
+    while (quantifier <= moment.utc(from).diff(clock, 'hours') || crossedDayBoundary(clock, moment.utc(from))) {
+        // console.log(clock.toDate(), moment.utc(from).diff(clock, 'hours'))
         sessions.push(clock.clone())
         clock.add(quantifier, 'hours')
+        if (crossedDayBoundary(clock, clockStart)) {
+            // console.log('Resetting this clockStart')
+            clock.startOf('day')
+            clockStart = clock.clone()
+        }
     }
-    console.log('>', clock.toDate(), moment.utc(from).diff(clock, 'hours'))
-    console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
+    // console.log('>', clock.toDate(), moment.utc(from).diff(clock, 'hours'))
+    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
     const mostRecentOpen = sessions[sessions.length-1]
     return mostRecentOpen.isSame(open)
-
-
-
-    // const startOfDay = from.clone().startOf('day')
-    // return moment.utc(open).diff(startOfDay, 'hours') % quantifier == 0 &&
-    //     moment.utc(open).clone().startOf('hour').isSame(open)
 }
 
-// TODO: test and fix: is the MOST RECENT candle
 /**
- * True if `open` is the most-recent completed `session-`minute session-open.
+ * True if `open` is the most-recent completed `session`-minute session-open.
  * @param session - Session length in minutes
  * @param open - Date under test
  * @param from - Date used as current time, to aid with testing
@@ -151,10 +158,6 @@ function isMinutelyOpen(session: number, open: Date, from: Date) {
     const quantifier = session
     const clock = moment.utc(from).subtract(1, 'day').startOf('day')
     let clockStart = clock.clone()
-    const crossedDayBoundary = (m1: moment.Moment, m2: moment.Moment) => {
-        // console.log('m1 day', m1.day(), 'm2 day', m2.day())
-        return !m1.isSame(m2, 'day')
-    }
 
     let sessions: moment.Moment[] = []
     // console.log(moment.utc(from).diff(clock, 'minutes'))

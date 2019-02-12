@@ -1,4 +1,5 @@
 import test, { Macro } from 'ava'
+import { range } from './utils'
 import moment from 'moment'
 
 /**
@@ -12,16 +13,6 @@ const MINUTES_IN_DAY = 60 * 24
 
 const isHourly = (session: number) => session >= MINUTES_IN_HOUR && session % MINUTES_IN_HOUR == 0
 const beginningOfDay = moment.utc('2019-02-08T00:00:00.000Z')
-
-/**
- * DOCUMENT
- */
-function range(lowEnd: number, highEnd: number): number[] {
-    let arr = []
-    let c = highEnd - lowEnd + 1
-    while ( c-- ) { arr[c] = highEnd-- }
-    return arr
-}
 
 /**
  * DOCUMENT
@@ -44,6 +35,9 @@ function minuteTest(timeframe: number, startMinute: number) {
     while (timeframe <= now.diff(lastIncompleteSessionOpen, 'minutes')) {
         lastCompletedSessionOpen = lastIncompleteSessionOpen.clone()
         lastIncompleteSessionOpen.add(timeframe, 'minutes')
+        if (!lastCompletedSessionOpen.isSame(lastIncompleteSessionOpen, 'date')) {
+            lastIncompleteSessionOpen.startOf('day')
+        }
         // console.log(`${lastCompletedSessionOpen.toISOString()} + ${timeframe} minutes => ${lastIncompleteSessionOpen.toISOString()}`)
     }
 
@@ -67,10 +61,7 @@ function minuteTest(timeframe: number, startMinute: number) {
 export function testMinuteSessions(startMinute: number, endMinute: number = startMinute) {
     range(startMinute, endMinute)
         .filter(timeframe => !isHourly(timeframe))
-        .map(timeframe => range(timeframe,
-                                // 30
-                                MINUTES_IN_DAY
-                               ).map(startMinute => [timeframe, startMinute]))
+        .map(timeframe => range(timeframe, MINUTES_IN_DAY + timeframe).map(startMinute => [timeframe, startMinute]))
         .reduce((a, b) => a.concat(b))
         .forEach(t => minuteTest(t[0], t[1]))
 }

@@ -9,6 +9,7 @@
     "ava": "ava",
     "watch:ava": "nodemon -e 'ts json' -x 'npm run ava || true'",
     "test": "nyc ava",
+    "test:minute": "ava ./test/test-is-most-recent-minute-01.ts ./test/minute/test*.ts --fail-fast -s -v",
     "test:tap": "nyc ava --tap | tap-nyc",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "watch:test": "nodemon -e 'ts json' -x 'npm test || true'",
