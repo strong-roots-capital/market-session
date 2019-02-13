@@ -1,5 +1,10 @@
 import * as moment from 'moment'
 
+/**
+ * TODO: refactor `isMostRecentSessionOpen` with knowledge gained from
+ * writing `recentSessions`
+ */
+
 export function isMostRecentSessionOpen(quantifier: number,
                                         duration: moment.unitOfTime.DurationConstructor,
                                         open: Date,
@@ -14,7 +19,6 @@ export function isMostRecentSessionOpen(quantifier: number,
     }
     const durationDivisor = nextLargerDurationDivisor[duration]
 
-    // const quantifier = session / moment.duration(1, duration).as('minutes')
     const now = moment.utc(from)
     const clock = now.clone().subtract(1, durationDivisor).startOf(durationDivisor)
     let clockStart = clock.clone()

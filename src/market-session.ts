@@ -10,6 +10,7 @@ import { utcDate } from '@hamroctopus/utc-date'
 import isTradingviewFormat from '@strong-roots-capital/is-tradingview-format'
 
 import { ArgumentError } from './argument-error'
+import { recentSessions } from './recent-sessions'
 import { isMostRecentSessionOpen } from './is-most-recent-session-open'
 import { isMinutely, isHourly, isDaily, isWeekly, isMonthly } from './is'
 import { MINUTES_IN_HOUR, MINUTES_IN_DAY, MINUTES_IN_WEEK, MINUTES_IN_MONTH } from './minutes'
@@ -52,20 +53,18 @@ function fromString(session: string): number {
     ow(session, ow.string.not.empty)
     ow(session, ow.string.is(inTradingviewFormat))
 
-    const translations: [RegExp, (n: string) => number][] = [
-        [/^[1-9][0-9]*$/, (n) => parseInt(n)],
-        [/^[1-9][0-9]*H$/, (n) => parseInt(n) * MINUTES_IN_HOUR],
-        [/^[1-9][0-9]*D$/, (n) => parseInt(n) * MINUTES_IN_DAY],
-        [/^[1-9][0-9]*W$/, (n) => parseInt(n) * MINUTES_IN_WEEK],
-        [/^[1-9][0-9]*M$/, (n) => parseInt(n) * MINUTES_IN_MONTH],
-        [/^H$/, () => MINUTES_IN_HOUR],
-        [/^D$/, () => MINUTES_IN_DAY],
-        [/^W$/, () => MINUTES_IN_WEEK],
-        [/^M$/, () => MINUTES_IN_MONTH]
+    // TODO: test where session is expressed in minutes but is a multiple of 60 (so isHourly)
+    const parseIt = (s: string): number => parseInt(s) ? parseInt(s) : 1
+    const translations: [(s: string) => boolean, (n: string) => number][] = [
+        [isMonthly, (n) => parseIt(n) * MINUTES_IN_MONTH],
+        [isWeekly, (n) => parseIt(n) * MINUTES_IN_WEEK],
+        [isDaily, (n) => parseIt(n) * MINUTES_IN_DAY],
+        [isHourly, (n) => parseIt(n) * MINUTES_IN_HOUR],
+        [isMinutely, (n) => parseIt(n)]
     ]
 
-    for (const [regex, translation] of translations) {
-        if (regex.test(session))
+    for (const [isTimeframe, translation] of translations) {
+        if (isTimeframe(session))
             return translation(session)
     }
 
@@ -155,16 +154,16 @@ function isMostRecent(session: string, dateOrTime: Date | number, from: Date = u
 
     const open: Date = is.number(dateOrTime) ? new Date(dateOrTime) : dateOrTime
 
-    const translations: [RegExp, (open: Date) => boolean][] = [
-        [/M$/, (open) => isMostRecentSessionOpen(parseInt(session), 'month', open, from)],
-        [/W$/, (open) => isMostRecentSessionOpen(parseInt(session), 'week', open, from)],
-        [/D$/, (open) => isMostRecentSessionOpen(parseInt(session), 'day', open, from)],
-        [/H$/, (open) => isMostRecentSessionOpen(parseInt(session), 'hours', open, from)],
-        [/^\d+$/, (open) => isMostRecentSessionOpen(parseInt(session), 'minutes', open, from)],
+    const translations: [(s: string) => boolean, (open: Date) => boolean][] = [
+        [isMonthly, (open) => isMostRecentSessionOpen(parseInt(session), 'month', open, from)],
+        [isWeekly, (open) => isMostRecentSessionOpen(parseInt(session), 'week', open, from)],
+        [isDaily, (open) => isMostRecentSessionOpen(parseInt(session), 'day', open, from)],
+        [isHourly, (open) => isMostRecentSessionOpen(parseInt(session), 'hours', open, from)],
+        [isMinutely, (open) => isMostRecentSessionOpen(parseInt(session), 'minutes', open, from)],
     ]
 
-    for (const [regex, isMostRecentInterval] of translations) {
-        if (regex.test(session))
+    for (const [isTimeframe, isMostRecentInterval] of translations) {
+        if (isTimeframe(session))
             return isMostRecentInterval(open)
     }
 
@@ -194,35 +193,31 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
         ow(session, ow.string.is(inTradingviewFormat))
     }
 
+    date = moment.utc(date).startOf('minute').toDate()
+
     let closed: number[] = []
 
-    const isNew = (duration: moment.unitOfTime.DurationConstructor, date: Date): boolean => moment.utc(date).startOf('minute').isSame(moment.utc(date).startOf(duration))
-    const getUTCDayIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'days')
-    const getUTCHoursIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'hours')
-    const getUTCMinutesIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'minutes')
-
+    // TODO: test where session is expressed in minutes but is a multiple of 60 (so isHourly)
     for (const rawSession of sessions) {
         const period = fromString(rawSession)
         const session = toString(period)
-        const quantifier = parseInt(session)
-        if (/M$/.test(session)) {
-            if (isNew('month', date) && (date.getUTCMonth() % quantifier == 0 || date.getUTCMonth() == 0))
+
+        const pushIfSessionClose = (duration: moment.unitOfTime.DurationConstructor) => {
+            if (recentSessions(parseInt(session), duration, date).includes(date.getTime()))
                 closed.push(period)
-        } else if (/W$/.test(session)) {
-            // TODO: check TV-week (first full-week of year) is valid, iso week is not a match
-            if (isNew('week', date) && moment.utc(date).week() % quantifier == 0)
-                closed.push(period)
-        } else if (/D$/.test(session)) {
-            if (isNew('day', date) && (getUTCDayIntoYear(date) % quantifier == 0 || getUTCDayIntoYear(date) == 0))
-                closed.push(period)
-        } else if (/H$/.test(session)) {
-            // TODO: TV would use number of hours into day
-            if (isNew('hour', date) && (getUTCHoursIntoYear(date) % quantifier == 0 || getUTCHoursIntoYear(date) == 0))
-                closed.push(period)
-        } else {
-            // TODO: TV would use number of minutes into day
-            if (getUTCMinutesIntoYear(date) % period == 0)
-                closed.push(period)
+        }
+
+        const translations: [(s: string) => boolean, () => void][] = [
+            [isMonthly, () => pushIfSessionClose('month')],
+            [isWeekly, () => pushIfSessionClose('week')],
+            [isDaily, () => pushIfSessionClose('day')],
+            [isHourly, () => pushIfSessionClose('hour')],
+            [isMinutely, () => pushIfSessionClose('minute')],
+        ]
+
+        for (const [isTimeframe, pushIfSessionClose] of translations) {
+            if (isTimeframe(session))
+                pushIfSessionClose()
         }
     }
 

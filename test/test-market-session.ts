@@ -1,5 +1,5 @@
-import test from 'ava'
-import moment from 'moment'
+import test, { Macro } from 'ava'
+import * as moment from 'moment'
 
 /**
  * Library under test
@@ -10,6 +10,7 @@ import session from '../src/market-session'
 // Note: tests the implicit-1's
 const hourSessions = ['60', '4H', '12H']
 const daySessions = ['D', '2D', '3D', '4D', '5D', '6D']
+// TODO: write a test for weekly sessions
 const weekSessions = ['W', '2W', '3w']
 const monthSessions = ['M', '3M', '6M']
 
@@ -94,10 +95,15 @@ test('one hour and one minute and one second past midnight should include no ses
     t.deepEqual([], session(date))
 })
 
-test("returned sessions should include only sessions included in search-parameters", t => {
+test('returned sessions should include only hourly sessions included in search-parameters', t => {
     const time = [2019, 0, 1, 0, 0, 1]
     const date = new Date(moment.utc(time).format())
     t.deepEqual(hourSessions.map(session.fromString), session(date, hourSessions))
+})
+
+test('returned sessions should include only monthly sessions included in search-parameters', t => {
+    const time = [2019, 0, 1, 0, 0, 1]
+    const date = new Date(moment.utc(time).format())
     t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
@@ -109,28 +115,13 @@ test("one second past midnight on new year's should include all hourly, daily, a
     t.deepEqual(monthSessions.map(session.fromString), session(date, monthSessions))
 })
 
-test('daily sessions should end at midnight iff session is evenly-divisible into number of days into the year', t => {
-    // t.deepEqual([session.fromString('2D')], session(new Date(moment.utc([2019, 0, 1 + 2, 0, 0]).format()), ['2D']))
-    // t.deepEqual([session.fromString('3D')], session(new Date(moment.utc([2019, 0, 1 + 3, 0, 0]).format()), ['3D']))
-    // t.deepEqual([session.fromString('4D')], session(new Date(moment.utc([2019, 0, 1 + 4, 0, 0]).format()), ['4D']))
-    // t.deepEqual([session.fromString('5D')], session(new Date(moment.utc([2019, 0, 1 + 5, 0, 0]).format()), ['5D']))
-    // t.deepEqual([session.fromString('6D')], session(new Date(moment.utc([2019, 0, 1 + 6, 0, 0]).format()), ['6D']))
-    // t.deepEqual([session.fromString('8D')], session(new Date(moment.utc([2019, 0, 1 + 8, 0, 0]).format()), ['8D']))
-    // t.deepEqual([session.fromString('9D')], session(new Date(moment.utc([2019, 0, 1 + 9, 0, 0]).format()), ['9D']))
-    for (let day = 2; day < 31; ++day) {
-        if (day % 7 == 0) { continue }
-        t.deepEqual([session.fromString(`${day}D`)], session(new Date(moment.utc([2019, 0, day+1, 0, 0]).format()), [`${day}D`]))
-        t.deepEqual([], session(new Date(moment.utc([2019, 0, day, 0, 0]).format()), [`${day}D`]))
-    }
-})
-
 test('weekly sessions should end on Sunday at midnight (UTC time) iff session is evenly-divisible into number of weeks into the year', t => {
     // 2019: Jan 1 => Tuesday
-    t.deepEqual([], session(new Date(moment.utc([2019, 0, 1, 0, 0]).format()), ['1W']))
+    t.deepEqual([], session(moment.utc([2019, 0, 1, 0, 0]).toDate(), ['1W']))
     // 2018: Jan 1 => Monday
-    t.deepEqual([], session(new Date(moment.utc([2018, 0, 1, 0, 0]).format()), ['1W']))
+    t.deepEqual([session.fromString('1W')], session(new Date(moment.utc([2018, 0, 1, 0, 0]).format()), ['1W']))
     // 2017: Jan 1 => Sunday
-    t.deepEqual([60 * 24 * 7], session(new Date(moment.utc([2017, 0, 1, 0, 0]).format()), ['1W']))
+    t.deepEqual([], session(new Date(moment.utc([2017, 0, 1, 0, 0]).format()), ['1W']))
 })
 
 test('second quarterly session should begin on April first', t => {
@@ -155,3 +146,14 @@ test('should throw ArgumentError when given invalid sessions', t => {
     }, Error)
     t.is(error.name, 'ArgumentError')
 })
+
+const dailySessionsEndAtMidnight: Macro<[number]> = (t: any, day: number) => {
+    t.deepEqual([session.fromString(`${day}D`)], session(new Date(moment.utc([2019, 0, day+1, 0, 0]).format()), [`${day}D`]))
+    t.deepEqual([], session(new Date(moment.utc([2019, 0, day, 0, 0]).format()), [`${day}D`]))
+}
+dailySessionsEndAtMidnight.title = (_ = '', day: number) => `${day}D session ends at midnight if evenly divisible into number of days into the year`
+
+for (let day = 2; day < 31; ++day) {
+    if (day % 7 == 0) { continue }
+    test(dailySessionsEndAtMidnight, day)
+}
