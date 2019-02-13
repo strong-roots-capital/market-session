@@ -153,4 +153,5 @@ test('should throw ArgumentError when given invalid sessions', t => {
     const error = t.throws(() => {
         session(new Date(), ['5b'])
     }, Error)
+    t.is(error.name, 'ArgumentError')
 })

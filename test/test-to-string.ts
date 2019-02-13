@@ -6,14 +6,26 @@ import test from 'ava'
 
 import session from '../src/market-session'
 
+const MINUTES_PER_YEAR = 525600
+
 test('should throw ArgumentError when passed a number less-than one', t => {
-    const testStrings = [0]
+    const testStrings = [0, -1, -10, -100]
     testStrings.forEach((session) => {
-        const error = t.throws(() => {
-            session.toString(session)
-        }, Error)
+        const error = t.throws(() => session.toString(session), Error)
         t.is(error.name, 'RangeError')
     })
+})
+
+test('should throw ArgumentError when passed a number greater-than the number of minutes in a year', t => {
+    const testStrings = [MINUTES_PER_YEAR + 1, MINUTES_PER_YEAR + 10, MINUTES_PER_YEAR + 100]
+    testStrings.forEach((session) => {
+        const error = t.throws(() => session.toString(session), Error)
+        t.is(error.name, 'RangeError')
+    })
+})
+
+test('should return 365D when passed the number of minutes in a year', t => {
+    t.is('365D', session.toString(MINUTES_PER_YEAR))
 })
 
 test('integers less-than or equal-to 60 should return the identity', t => {

@@ -3,14 +3,16 @@
  * Logic for financial-market sessions
  */
 
-// TODO: update market-session with this format -- years is invalid
-
 import ow from 'ow'
 import is from '@sindresorhus/is'
-import { ArgumentError } from './argument-error'
 import * as moment from 'moment'
 import { utcDate } from '@hamroctopus/utc-date'
 import isTradingviewFormat from '@strong-roots-capital/is-tradingview-format'
+
+import { ArgumentError } from './argument-error'
+import { isMostRecentSessionOpen } from './is-most-recent-session-open'
+import { isMinutely, isHourly, isDaily, isWeekly, isMonthly } from './is'
+import { MINUTES_IN_HOUR, MINUTES_IN_DAY, MINUTES_IN_WEEK, MINUTES_IN_MONTH } from './minutes'
 
 /**
  * Default session-resolutions to match against given date-times.
@@ -23,237 +25,18 @@ export interface Session {
     (date: Date, sessions?: string[]): number[]
     fromString(session: string): number
     toString(session: number): string
-    isMostRecent(session: string, dateOrTime: Date | number, from?: Date): boolean
+    isMostRecent(session: string, dateOrTime: Date | number, from: Date): boolean
 }
-
-const MINUTES_IN_HOUR = 60
-const MINUTES_IN_DAY = 60 * 24
-const MINUTES_IN_WEEK = 60 * 24 * 7
-// TODO: verify this is the number used in each TradingView calendar month
-const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
 
 const inTradingviewFormat = (s: string): boolean | string => isTradingviewFormat(s) || `Expected string ${s} to be in Trading View format`
-
-const isNew = (duration: moment.unitOfTime.DurationConstructor, date: Date): boolean => moment.utc(date).startOf('minute').isSame(moment.utc(date).startOf(duration))
-
-const getUTCDayIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'days')
-const getUTCHoursIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'hours')
-const getUTCMinutesIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'minutes')
-
-function startOfPrevious(duration: moment.unitOfTime.DurationConstructor,
-                         currentDate: moment.Moment = moment.utc()) {
-    return currentDate.subtract(1, duration).startOf(duration)
-}
-
-// FIXME: pull TV week code out into own module
-function firstFullWeekOfNewYear() {
-    let firstWeek = moment.utc().day('Monday').week(1).startOf('day')
-    const nextWeek = moment.utc().day('Monday').week(2).startOf('day')
-    if (firstWeek.toDate().getUTCFullYear() !== nextWeek.toDate().getUTCFullYear()) {
-        firstWeek = nextWeek
-    }
-    return firstWeek
-}
-
-/* Zero-indexed */
-function nthFullWeekOfNewYear(n: number) {
-    let week = firstFullWeekOfNewYear()
-    for (let i = 0; i < n; ++i) {
-        week.add(1, 'week')
-    }
-    return week
-}
-
-function everyNthWeekOfYear(n: number) {
-    let weeks = []
-    let index = 0
-    while (index < 52) {
-        weeks.push(nthFullWeekOfNewYear(index))
-        index += n
-    }
-    return weeks
-}
-
-const isMonthly = (session: number) => session >= MINUTES_IN_MONTH && session % MINUTES_IN_MONTH == 0
-const isWeekly = (session: number) => session >= MINUTES_IN_WEEK && session % MINUTES_IN_WEEK == 0
-const isDaily = (session: number) => session >= MINUTES_IN_DAY && session % MINUTES_IN_DAY == 0
-const isHourly = (session: number) => session >= MINUTES_IN_HOUR && session % MINUTES_IN_HOUR == 0
-const isMinutely = (session: number) => Number.isInteger(session)
-
-/* Note: quantifiers ignored over 12 */
-// TODO: implement from
-const isMonthlyOpen = (quantifier: number, open: Date, from: Date): boolean => {
-    const now = moment.utc(from)
-    const clock = now.clone().subtract(1, 'year').startOf('year')
-    let clockStart = clock.clone()
-
-    let sessions: moment.Moment[] = []
-    // console.log(now.diff(clock, 'month'))
-    while (quantifier <= now.diff(clock, 'month') || !clock.isSame(now, 'year')) {
-        // console.log(clock.toDate(), now.diff(clock, 'month'))
-        sessions.push(clock.clone())
-        clock.add(quantifier, 'month')
-        if (!clock.isSame(clockStart, 'year')) {
-            // console.log('Resetting this clockStart')
-            clock.startOf('year')
-            clockStart = clock.clone()
-        }
-    }
-    // console.log('>', clock.toDate(), now.diff(clock, 'month'))
-    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    const mostRecentOpen = sessions[sessions.length-1]
-    return mostRecentOpen.isSame(open)
-}
-
-// TODO: test and fix: is the MOST RECENT candle
-/* Note: quantifiers ignored over 52 */
-const isWeeklyOpen = (session: number, open: Date, from: Date) => {
-    return isSubYearlySessionOpen(session, 'week', open, from)
-}
-
-// TODO: test and fix: is the MOST RECENT candle
-/* Note: quantifiers ignored over 364 */
-function isDailyOpen(session: number, open: Date, from: Date) {
-    return isSubYearlySessionOpen(session, 'day', open, from)
-}
-
-/**
- * DOCUMENT
- */
-function isSubYearlySessionOpen(session: number,
-                               duration: moment.unitOfTime.DurationConstructor,
-                               open: Date,
-                               from: Date) {
-
-    const quantifier = session / moment.duration(1, duration).as('minutes')
-    const now = moment.utc(from)
-    const clock = now.clone().subtract(1, 'year').startOf('year')
-    let clockStart = clock.clone()
-
-    let sessions: moment.Moment[] = []
-    // console.log(now.diff(clock, duration))
-    while (quantifier <= now.diff(clock, duration) || !clock.isSame(now, 'year')) {
-        // console.log(clock.toDate(), now.diff(clock, duration))
-        sessions.push(clock.clone())
-        clock.add(quantifier, duration)
-        if (!clock.isSame(clockStart, 'year')) {
-            // console.log('Resetting this clockStart')
-            clock.startOf('year')
-            clockStart = clock.clone()
-        }
-    }
-    // console.log('>', clock.toDate(), now.diff(clock, duration))
-    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    const mostRecentOpen = sessions[sessions.length-1]
-    return mostRecentOpen.isSame(open)
-}
-
-/**
- * DOCUMENT
- */
-function isSubDailySessionOpen(session: number,
-                               duration: moment.unitOfTime.DurationConstructor,
-                               open: Date,
-                               from: Date) {
-
-    // const nextSmallestDuration: { [key: string]: moment.unitOfTime.Base } = {
-    //     'minutes': 'minutes',
-    //     'hours': 'minutes'
-    // }
-
-    const quantifier = session / moment.duration(1, duration).as('minutes')
-    const now = moment.utc(from)
-    const clock = now.clone().subtract(1, 'day').startOf('day')
-    let clockStart = clock.clone()
-
-    let sessions: moment.Moment[] = []
-    // console.log(now.diff(clock, duration))
-    while (quantifier <= now.diff(clock, duration) || !clock.isSame(now, 'date')) {
-        // console.log(clock.toDate(), now.diff(clock, duration))
-        sessions.push(clock.clone())
-        clock.add(quantifier, duration)
-        if (!clock.isSame(clockStart, 'date')) {
-            // console.log('Resetting this clockStart')
-            clock.startOf('day')
-            clockStart = clock.clone()
-        }
-    }
-    // console.log('>', clock.toDate(), now.diff(clock, duration))
-    // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    const mostRecentOpen = sessions[sessions.length-1]
-    return mostRecentOpen.isSame(open)
-}
-
-// TODO: test and fix: is the MOST RECENT candle
-// TODO: test backwards across the day-boundary
-/**
- * True if `open` is the most-recent completed `session`-hour session-open.
- * @param session - Session length in minutes
- * @param open - Date under test
- * @param from - Date used as current time, to aid with testing
- */
-function isHourlyOpen(session: number, open: Date, from: Date) {
-    return isSubDailySessionOpen(session, 'hours', open, from)
-    // const quantifier = session / MINUTES_IN_HOUR
-    // const clock = moment.utc(from).subtract(1, 'day').startOf('day')
-    // let clockStart = clock.clone()
-
-    // let sessions: moment.Moment[] = []
-    // // console.log(moment.utc(from).diff(clock, 'hours'))
-    // while (quantifier <= moment.utc(from).diff(clock, 'hours') || crossedDayBoundary(clock, moment.utc(from))) {
-    //     // console.log(clock.toDate(), moment.utc(from).diff(clock, 'hours'))
-    //     sessions.push(clock.clone())
-    //     clock.add(quantifier, 'hours')
-    //     if (crossedDayBoundary(clock, clockStart)) {
-    //         // console.log('Resetting this clockStart')
-    //         clock.startOf('day')
-    //         clockStart = clock.clone()
-    //     }
-    // }
-    // // console.log('>', clock.toDate(), moment.utc(from).diff(clock, 'hours'))
-    // // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    // const mostRecentOpen = sessions[sessions.length-1]
-    // return mostRecentOpen.isSame(open)
-}
-
-/**
- * True if `open` is the most-recent completed `session`-minute session-open.
- * @param session - Session length in minutes
- * @param open - Date under test
- * @param from - Date used as current time, to aid with testing
- */
-function isMinutelyOpen(session: number, open: Date, from: Date) {
-    return isSubDailySessionOpen(session, 'minutes', open, from)
-    // const quantifier = session
-    // const clock = moment.utc(from).subtract(1, 'day').startOf('day')
-    // let clockStart = clock.clone()
-
-    // let sessions: moment.Moment[] = []
-    // // console.log(moment.utc(from).diff(clock, 'minutes'))
-    // while (quantifier <= moment.utc(from).diff(clock, 'minutes') || crossedDayBoundary(clock, moment.utc(from))) {
-    //     // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
-    //     sessions.push(clock.clone())
-    //     clock.add(quantifier, 'minutes')
-    //     if (crossedDayBoundary(clock, clockStart)) {
-    //         // console.log('Resetting this clockStart')
-    //         clock.startOf('day')
-    //         clockStart = clock.clone()
-    //     }
-    // }
-    // // console.log(clock.toDate(), moment.utc(from).diff(clock, 'minutes'))
-    // // console.log('Most-recent opening session since start of day', sessions[sessions.length-1].toDate())
-    // const mostRecentOpen = sessions[sessions.length-1]
-    // return mostRecentOpen.isSame(open)
-}
-
-
 
 /**
  * Convert a string-based representation of a market session into an
  * integer describing the session length in minutes.
  *
- * Valid input consists of a number followed by one of the following
- * suffixes: '', 'H', 'D', 'W', 'M', or 'Y'.
+ * Input is validated against the Trading View format, which can
+ * briefly be described as a number followed by one of the following
+ * suffixes: '', 'H', 'D', 'W', or 'M'.
  *
  * A string consisting only of a valid suffix-character will be
  * interpreted as having an implicit quantifier of 1.
@@ -301,13 +84,9 @@ function fromString(session: string): number {
  * output will consist of a suffix denoting
  *
  * 'H'  =\> hours
- *
  * 'D'  =\> days
- *
  * 'W'  =\> weeks
- *
  * 'M'  =\> months
- *
  * 'Y'  =\> years
  *
  * Otherwise, the original session will be returned as a string.
@@ -318,22 +97,31 @@ function fromString(session: string): number {
 function toString(session: number): string {
 
     ow(session, ow.number.greaterThan(0))
+    ow(session, ow.number.lessThanOrEqual(moment.duration(1, 'year').as('minutes')))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
         [isMonthly, (n) => `${n/MINUTES_IN_MONTH}M`],
         [isWeekly, (n) => `${n/MINUTES_IN_WEEK}W`],
         [isDaily, (n) => `${n/MINUTES_IN_DAY}D`],
         [isHourly, (n) => `${n/MINUTES_IN_HOUR}H`],
+        [isMinutely, (n) => `${n}`]
     ]
 
     for (const [predicate, translation] of translations) {
         if (predicate(session)) {
-            // TODO: ow => verify isTradingviewFormat()
-            return translation(session)
+            const asString = translation(session)
+            if (!isTradingviewFormat(asString)) {
+                console.warn(`WARNING: ${session} as a string (${asString}) is not valid Trading View format`)
+            }
+            return asString
         }
     }
 
-    return session.toString()
+    /**
+     * Note: this statement should never run. If you are seeing this
+     * error, the argument validation above is incorrect
+     */
+    throw new ArgumentError(`Cannot interpret session interval ${session}`, toString)
 }
 
 /**
@@ -341,37 +129,49 @@ function toString(session: number): string {
  * session.
  *
  * @remarks
- * Yearly-quantifiers are currently ignore, in accordance with
- * how Trading View handles multi-yearly periods.
  *
  * @param session - Session (in Trading View format) length in question
  * @param dateOrTime - Date or time of the open of the session in
  * question
+ * @param from - Date used as current time, to aid with testing
  * @returns True if `dateOrTime` describes the open of the most
  * recently-closed candle
  */
-// DISCUSS: taking session as a number also,a to avoid `1h` and `1H` inconsistencies
-// TODO: hide currentDate from the exposed callable function, it is not for users but for testing stubs
 function isMostRecent(session: string, dateOrTime: Date | number, from: Date = utcDate()): boolean {
-    const open: Date = is.number(dateOrTime) ? new Date(dateOrTime) : dateOrTime
-
+    /**
+     * There was a prior discussion around typing `session` as
+     * `number | string`, and a decision made against the
+     * proposal. The decision stems from a 'month' having such a
+     * nebulous definition in terms of minutes.
+     *
+     * The `toString` function in this package shall use the
+     * numeric test defined in `isMonthly` to preserve the
+     * congruence in the toString(fromString('1M')) transform.
+     *
+     * The `isMostRecent` function however deals with _specific_
+     * months and as such cannot use general approximations.
+     */
     ow(session, ow.string.is(inTradingviewFormat))
 
-    const sessionLength = fromString(session)
+    const open: Date = is.number(dateOrTime) ? new Date(dateOrTime) : dateOrTime
 
-    const translations: [(n: number) => boolean, (n: Date) => boolean][] = [
-        [() => /M$/.test(session), (open) => isMonthlyOpen(parseInt(session), open, from)],
-        [isWeekly, (open) => isWeeklyOpen(sessionLength, open, from)],
-        [isDaily, (open) => isDailyOpen(sessionLength, open, from)],
-        [isHourly, (open) => isHourlyOpen(sessionLength, open, from)],
-        [isMinutely, (open) => isMinutelyOpen(sessionLength, open, from)],
+    const translations: [RegExp, (open: Date) => boolean][] = [
+        [/M$/, (open) => isMostRecentSessionOpen(parseInt(session), 'month', open, from)],
+        [/W$/, (open) => isMostRecentSessionOpen(parseInt(session), 'week', open, from)],
+        [/D$/, (open) => isMostRecentSessionOpen(parseInt(session), 'day', open, from)],
+        [/H$/, (open) => isMostRecentSessionOpen(parseInt(session), 'hours', open, from)],
+        [/^\d+$/, (open) => isMostRecentSessionOpen(parseInt(session), 'minutes', open, from)],
     ]
 
-    for (const [isInterval, isMostRecentInterval] of translations) {
-        if (isInterval(sessionLength))
+    for (const [regex, isMostRecentInterval] of translations) {
+        if (regex.test(session))
             return isMostRecentInterval(open)
     }
 
+    /**
+     * Note: this statement should never run. If you are seeing this
+     * error, the argument validation above is incorrect
+     */
     throw new ArgumentError(`Cannot interpret session interval ${session}`, isMostRecent)
 }
 
@@ -384,13 +184,22 @@ function isMostRecent(session: string, dateOrTime: Date | number, from: Date = u
  * @param date - Date to test for session-closes
  * @returns List of sessions that closed on `date`
  */
-// DISCUSS: allowing sessions as string[] | number[]
+// TODO: this needs to be overhauled.
 const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
+    // DISCUSS: allowing sessions as string[] | number[]. number[] would
+    // avoid ambiguity in representation
 
     /* Validate parameters */
-    sessions.map(fromString)
+    for (const session of sessions) {
+        ow(session, ow.string.is(inTradingviewFormat))
+    }
 
     let closed: number[] = []
+
+    const isNew = (duration: moment.unitOfTime.DurationConstructor, date: Date): boolean => moment.utc(date).startOf('minute').isSame(moment.utc(date).startOf(duration))
+    const getUTCDayIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'days')
+    const getUTCHoursIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'hours')
+    const getUTCMinutesIntoYear = (date: Date): number => moment.utc(date).diff(moment.utc(date).startOf('year'), 'minutes')
 
     for (const rawSession of sessions) {
         const period = fromString(rawSession)
@@ -400,15 +209,18 @@ const session = (date: Date, sessions: string[] = defaultSessions): number[] => 
             if (isNew('month', date) && (date.getUTCMonth() % quantifier == 0 || date.getUTCMonth() == 0))
                 closed.push(period)
         } else if (/W$/.test(session)) {
+            // TODO: check TV-week (first full-week of year) is valid, iso week is not a match
             if (isNew('week', date) && moment.utc(date).week() % quantifier == 0)
                 closed.push(period)
         } else if (/D$/.test(session)) {
             if (isNew('day', date) && (getUTCDayIntoYear(date) % quantifier == 0 || getUTCDayIntoYear(date) == 0))
                 closed.push(period)
         } else if (/H$/.test(session)) {
+            // TODO: TV would use number of hours into day
             if (isNew('hour', date) && (getUTCHoursIntoYear(date) % quantifier == 0 || getUTCHoursIntoYear(date) == 0))
                 closed.push(period)
         } else {
+            // TODO: TV would use number of minutes into day
             if (getUTCMinutesIntoYear(date) % period == 0)
                 closed.push(period)
         }

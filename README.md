@@ -35,7 +35,9 @@ TODO: add examples of isMostRecent to readme
 
 - All times are assumed to be UTC.
 
-- The [Trading View](https://www.tradingview.com) format is used for expressing timeframes.
+- The [Trading View format](https://github.com/strong-roots-capital/is-tradingview-format)
+  is used for expressing timeframes.
 
-- Note that periods of months in excess of one-year currently resolve
-  to one-year intervals. For example, `18M` is equivalent to `1Y`.
+## Related
+
+- [is-tradingview-format](https://github.com/strong-roots-capital/is-tradingview-format)

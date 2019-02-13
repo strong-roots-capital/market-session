@@ -60,7 +60,7 @@ function minuteTest(timeframe: number, startMinute: number) {
  */
 export function testMinuteSessions(startMinute: number, endMinute: number = startMinute) {
     range(startMinute, endMinute)
-        .filter(timeframe => !isHourly(timeframe))
+        // .filter(timeframe => !isHourly(timeframe))
         .map(timeframe => range(timeframe, moment.duration(1, 'day').as('minutes') + timeframe).map(startMinute => [timeframe, startMinute]))
         .reduce((a, b) => a.concat(b))
         .forEach(t => minuteTest(t[0], t[1]))
