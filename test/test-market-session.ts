@@ -89,6 +89,12 @@ test('twelve hours past midnight should include the 1h, 4h, 12h sessions', t => 
     t.deepEqual([60, 240, 720], session(date, ['1H', '4H', '12H']))
 })
 
+test('twelve hours past midnight should include the 1h, 4h, 12h sessions when expressed in minutes', t => {
+    const time = [2019, 0, 1, 12]
+    const date = new Date(moment.utc(time).format())
+    t.deepEqual([60, 240, 720], session(date, ['60', '240', '720']))
+})
+
 test('one hour and one minute and one second past midnight should include no sessions', t => {
     const time = [2019, 0, 1, 1, 1, 1]
     const date = new Date(moment.utc(time).format())

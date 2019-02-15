@@ -40,7 +40,7 @@
   "dependencies": {
     "@hamroctopus/utc-date": "^1.0.5",
     "@sindresorhus/is": "^0.15.0",
-    "@strong-roots-capital/is-tradingview-format": "^1.0.0",
+    "@strong-roots-capital/is-tradingview-format": "^1.2.2",
     "@types/node": "^10.12.18",
     "moment": "^2.23.0",
     "ow": "^0.10.0",

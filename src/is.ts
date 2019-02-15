@@ -29,9 +29,8 @@ export function isHourly(session: number | string): boolean {
         : /H$/.test(session)
 }
 
-// TODO: test where session is expressed in minutes but is a multiple of 60 (so isHourly)
 export function isMinutely(session: number | string): boolean {
     return is.number(session)
-        ? Number.isInteger(session)
+        ? !isHourly(session) && Number.isInteger(session)
         : /^\d+$/.test(session)
 }

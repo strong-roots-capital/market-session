@@ -18,6 +18,8 @@ export function recentSessions(quantifier: number,
                                duration: moment.unitOfTime.DurationConstructor,
                                from: Date) {
 
+    console.log(`Looking for ${quantifier} ${duration} sessions leading up to ${from.toISOString()}`)
+
     const nextLargerDurationDivisor: { [key: string]: moment.unitOfTime.Base } = {
         'minute': 'day',
         'hour': 'day',
@@ -28,20 +30,17 @@ export function recentSessions(quantifier: number,
     const durationDivisor = nextLargerDurationDivisor[duration]
 
     const now = moment.utc(from)
-    let clock = now.clone().subtract(1, durationDivisor).startOf(durationDivisor)
-    if (duration === 'week') {
-        clock = firstFullWeekOfYear(from.getFullYear())
-    }
+    let clock = duration === 'week'
+        ? firstFullWeekOfYear(from.getFullYear())
+        : now.clone().subtract(1, durationDivisor).startOf(durationDivisor)
     let clockStart = clock.clone()
 
     let sessions: Date[] = []
     while (clock.isSameOrBefore(now)) {
         sessions.push(clock.toDate())
-        if (duration === 'week') {
-            clock.add(quantifier * 7, 'days')
-        } else {
-            clock.add(quantifier, duration)
-        }
+        duration === 'week'
+            ? clock.add(quantifier * 7, 'days')
+            : clock.add(quantifier, duration)
         // console.log('Clock is now', clock.toDate())
         if (duration !== 'week' && !clock.isSame(clockStart, durationDivisor)) {
             clock.startOf(durationDivisor)
@@ -49,6 +48,6 @@ export function recentSessions(quantifier: number,
         }
     }
     // console.log('Stopping here at', clock.toDate())
-    // console.log('Sessions are:\n', sessions)
+    console.log('Sessions are:\n', sessions)
     return sessions.map(d => d.getTime())
 }
