@@ -34,3 +34,4 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 ## Related
 
 - [is-tradingview-format](https://github.com/strong-roots-capital/is-tradingview-format)
+- [get-recent-sessions](https://github.com/strong-roots-capital/get-recent-sessions)
