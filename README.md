@@ -2,6 +2,8 @@
 
 > Logic for financial-market sessions
 
+Note: all times assumed to be UTC
+
 ## Install
 
 ``` shell
@@ -28,15 +30,6 @@ console.log(session(new Date('2019-01-01')).map(session.toString))
 console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 //=> ['3M']
 ```
-
-TODO: add examples of isMostRecent to readme
-
-## Limitations
-
-- All times are assumed to be UTC.
-
-- The [Trading View format](https://github.com/strong-roots-capital/is-tradingview-format)
-  is used for expressing timeframes.
 
 ## Related
 
