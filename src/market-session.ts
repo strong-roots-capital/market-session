@@ -31,9 +31,10 @@ const defaultSessions = [
 ]
 
 export interface Session {
-    (date: Date, sessions?: string[] | number[]): string[] | number[];
-    fromString(session: string): number;
-    toString(session: number): string;
+    (date: Date, sessions?: string[]): string[]
+    (date: Date, sessions?: number[]): number[]
+    fromString(session: string): number
+    toString(session: number): string
 }
 
 /**
