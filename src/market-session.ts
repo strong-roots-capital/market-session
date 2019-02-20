@@ -6,7 +6,7 @@
 import ow from 'ow'
 import is from '@sindresorhus/is'
 import moment from 'moment'
-import { utcDate } from '@hamroctopus/utc-date'
+import getRecentSessions from '@strong-roots-capital/get-recent-sessions'
 import isTradingviewFormat, {
     inTradingviewFormat,
     isTradingviewFormatMinutes,
@@ -17,12 +17,11 @@ import isTradingviewFormat, {
 } from '@strong-roots-capital/is-tradingview-format'
 
 import { ArgumentError } from './argument-error'
-// FIXME: replace with get-recent-sessions
-import { recentSessions } from './recent-sessions'
-import { isMostRecentSessionOpen } from './is-most-recent-session-open'
-import { isMinutely, isHourly, isDaily, isWeekly, isMonthly } from './is'
-// FIXME: use in-place again, with only numbers
-import { MINUTES_IN_HOUR, MINUTES_IN_DAY, MINUTES_IN_WEEK, MINUTES_IN_MONTH } from './minutes'
+
+const MINUTES_IN_MONTH = 60 * 24 * 7 * 4
+const MINUTES_IN_WEEK = 60 * 24 * 7
+const MINUTES_IN_DAY = 60 * 24
+const MINUTES_IN_HOUR = 60
 
 /**
  * Default session-resolutions to match against given date-times.
@@ -32,10 +31,9 @@ const defaultSessions = [
 ]
 
 export interface Session {
-    (date: Date, sessions?: string[]): number[]
-    fromString(session: string): number
-    toString(session: number): string
-    isMostRecent(session: string, dateOrTime: Date | number, from: Date): boolean
+    (date: Date, sessions?: string[] | number[]): string[] | number[];
+    fromString(session: string): number;
+    toString(session: number): string;
 }
 
 /**
@@ -105,11 +103,11 @@ function toString(session: number): string {
     ow(session, ow.number.lessThanOrEqual(moment.duration(1, 'year').as('minutes')))
 
     const translations: [(n: number) => boolean, (n: number) => string][] = [
-        [isMonthly, (n) => `${n/MINUTES_IN_MONTH}M`],
-        [isWeekly, (n) => `${n/MINUTES_IN_WEEK}W`],
-        [isDaily, (n) => `${n/MINUTES_IN_DAY}D`],
-        [isHourly, (n) => `${n/MINUTES_IN_HOUR}H`],
-        [isMinutely, (n) => `${n}`]
+        [(n) => n >= MINUTES_IN_MONTH && n % MINUTES_IN_MONTH == 0, (n) => `${n/MINUTES_IN_MONTH}M`],
+        [(n) => n >= MINUTES_IN_WEEK && n % MINUTES_IN_WEEK == 0, (n) => `${n/MINUTES_IN_WEEK}W`],
+        [(n) => n >= MINUTES_IN_DAY && n % MINUTES_IN_DAY == 0, (n) => `${n/MINUTES_IN_DAY}D`],
+        [(n) => n >= MINUTES_IN_HOUR && n % MINUTES_IN_HOUR == 0, (n) => `${n/MINUTES_IN_HOUR}H`],
+        [Number.isInteger, (n) => `${n}`]
     ]
 
     for (const [predicate, translation] of translations) {
@@ -130,102 +128,45 @@ function toString(session: number): string {
 }
 
 /**
- * Test if an opening-timestamp describes the most recently-closed
- * session.
+ * Return list of sessions that closed on Date (with minute-resolution).
+ * List of sessions to check is confined to `sessions`
  *
  * @remarks
- *
- * @param session - Session (in Trading View format) length in question
- * @param dateOrTime - Date or time of the open of the session in
- * question
- * @param from - Date used as current time, to aid with testing
- * @returns True if `dateOrTime` describes the open of the most
- * recently-closed candle
- */
-function isMostRecent(session: string, dateOrTime: Date | number, from: Date = utcDate()): boolean {
-    /**
-     * There was a prior discussion around typing `session` as
-     * `number | string`, and a decision made against the
-     * proposal. The decision stems from a 'month' having such a
-     * nebulous definition in terms of minutes.
-     *
-     * The `toString` function in this package shall use the numeric
-     * test defined in `isTradingviewFormatMonths` to preserve the
-     * congruence in the toString(fromString('1M')) transform.
-     *
-     * The `isMostRecent` function however deals with _specific_
-     * months and as such cannot use general approximations.
-     */
-    ow(session, ow.string.is(inTradingviewFormat))
-
-    const open: Date = is.number(dateOrTime) ? new Date(dateOrTime) : dateOrTime
-
-    const translations: [(s: string) => boolean, (open: Date) => boolean][] = [
-        [isTradingviewFormatMonths, (open) => isMostRecentSessionOpen(parseInt(session), 'month', open, from)],
-        [isTradingviewFormatWeeks, (open) => isMostRecentSessionOpen(parseInt(session), 'week', open, from)],
-        [isTradingviewFormatDays, (open) => isMostRecentSessionOpen(parseInt(session), 'day', open, from)],
-        [isTradingviewFormatHours, (open) => isMostRecentSessionOpen(parseInt(session), 'hours', open, from)],
-        [isTradingviewFormatMinutes, (open) => isMostRecentSessionOpen(parseInt(session), 'minutes', open, from)],
-    ]
-
-    for (const [isTimeframe, isMostRecentInterval] of translations) {
-        if (isTimeframe(session))
-            return isMostRecentInterval(open)
-    }
-
-    /**
-     * Note: this statement should never run. If you are seeing this
-     * error, the argument validation above is incorrect
-     */
-    throw new ArgumentError(`Cannot interpret session interval ${session}`, isMostRecent)
-}
-
-
-/**
- * Return list of sessions that closed on Date (with minute-resolution).
- * List of sessions is confined to `sessions`, which may be overridden
- * with any sessions accepted by `fromString`.
+ *`sessions` may be expressed as a number[], representing number of
+ * minutes in each timeframe, or as a string[], with timeframes
+ * represented in Trading View format. The return-value will be
+ * expressed in the same manner as `sessions`.
  *
  * @param date - Date to test for session-closes
+ * @param sessions - List of session-lengths to check
  * @returns List of sessions that closed on `date`
  */
-const session = (date: Date, sessions: string[] = defaultSessions): number[] => {
-    // DISCUSS: allowing sessions as string[] | number[]. number[] would
-    // avoid ambiguity in representation
+function session(date: Date, sessions?: string[]): string[];
+function session(date: Date, sessions?: number[]): number[];
+function session(date: Date, sessions: string[] | number[] = defaultSessions): string[] | number[] {
 
-    for (const session of sessions) {
-        ow(session, ow.string.is(inTradingviewFormat))
-    }
+    let timeframes: string[] = []
+    sessions.forEach((session: number | string) => timeframes.push(is.number(session) ? toString(session) : session))
+
+    timeframes.forEach(timeframe => ow(timeframe, ow.string.is(inTradingviewFormat)))
 
     date = moment.utc(date).startOf('minute').toDate()
 
-    let closed: number[] = []
+    let closedStrings: string[] = []
+    let closedNumbers: number[] = []
 
-    for (const rawSession of sessions) {
-        const period = fromString(rawSession)
-        const session = toString(period)
+    for (const rawTimeframe of timeframes) {
+        /* normalize timeframe */
+        const period = fromString(rawTimeframe)
+        const timeframe = toString(period)
 
-        const pushIfSessionClose = (duration: moment.unitOfTime.Base): void => {
-            if (recentSessions(parseInt(session), duration, date).includes(date.getTime()))
-                closed.push(period)
-        }
-
-        const translations: [(s: string) => boolean, () => void][] = [
-            [isTradingviewFormatMonths, () => pushIfSessionClose('month')],
-            [isTradingviewFormatWeeks, () => pushIfSessionClose('week')],
-            [isTradingviewFormatDays, () => pushIfSessionClose('day')],
-            [isTradingviewFormatHours, () => pushIfSessionClose('hour')],
-            [isTradingviewFormatMinutes, () => pushIfSessionClose('minute')],
-        ]
-
-        for (const [isTimeframe, pushIfSessionClose] of translations) {
-            if (isTimeframe(session))
-                pushIfSessionClose()
+        if (getRecentSessions(timeframe, date).includes(date.getTime())) {
+            closedNumbers.push(period)
+            closedStrings.push(timeframe)
         }
     }
 
-    // console.log('Closed sessions:', closed)
-    return closed
+    return is.number(sessions[0]) ? closedNumbers : closedStrings
 }
 
 
@@ -235,10 +176,9 @@ Object.defineProperties(session, {
     },
     toString: {
         value: toString
-    },
-    isMostRecent: {
-        value: isMostRecent
     }
 })
 
 export default session as Session
+
+//  LocalWords:  marketSession
