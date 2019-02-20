@@ -31,7 +31,7 @@ console.log(session(new Date('2019-01-01')))
 console.log(session(new Date('2019-04-01'), ['3M']))
 //=> ['3M']
 
-console.log(session(new Date('2019-01-01')).map(session.fromString)
+console.log(session(new Date('2019-01-01')).map(session.fromString))
 //=> [ 5, 15, 30, 60, 240, 720, 1440, 4320, 40320, 120960, 483840 ]
 ```
 
