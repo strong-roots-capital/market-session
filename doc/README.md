@@ -39,6 +39,7 @@ Related
 -------
 
 *   [is-tradingview-format](https://github.com/strong-roots-capital/is-tradingview-format)
+*   [get-recent-sessions](https://github.com/strong-roots-capital/get-recent-sessions)
 
 ## Index
 
