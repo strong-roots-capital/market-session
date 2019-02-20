@@ -9,7 +9,7 @@
 ## Callable
 ▸ **__call**(date: *`Date`*, sessions?: *`string`[] \| `number`[]*): `string`[] \| `number`[]
 
-*Defined in [market-session.ts:33](https://github.com/strong-roots-capital/market-session/blob/f62f2f0/src/market-session.ts#L33)*
+*Defined in [market-session.ts:33](https://github.com/strong-roots-capital/market-session/blob/2434e94/src/market-session.ts#L33)*
 
 **Parameters:**
 
@@ -37,7 +37,7 @@
 
 ▸ **fromString**(session: *`string`*): `number`
 
-*Defined in [market-session.ts:35](https://github.com/strong-roots-capital/market-session/blob/f62f2f0/src/market-session.ts#L35)*
+*Defined in [market-session.ts:35](https://github.com/strong-roots-capital/market-session/blob/2434e94/src/market-session.ts#L35)*
 
 **Parameters:**
 
@@ -54,7 +54,7 @@ ___
 
 ▸ **toString**(session: *`number`*): `string`
 
-*Defined in [market-session.ts:36](https://github.com/strong-roots-capital/market-session/blob/f62f2f0/src/market-session.ts#L36)*
+*Defined in [market-session.ts:36](https://github.com/strong-roots-capital/market-session/blob/2434e94/src/market-session.ts#L36)*
 
 **Parameters:**
 
