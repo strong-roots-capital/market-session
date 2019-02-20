@@ -7,18 +7,18 @@
 **Session**
 
 ## Callable
-▸ **__call**(date: *`Date`*, sessions?: *`string`[]*): `number`[]
+▸ **__call**(date: *`Date`*, sessions?: *`string`[] \| `number`[]*): `string`[] \| `number`[]
 
-*Defined in [market-session.ts:18](https://github.com/strong-roots-capital/market-session/blob/42ebbb2/src/market-session.ts#L18)*
+*Defined in [market-session.ts:33](https://github.com/strong-roots-capital/market-session/blob/a76f7cf/src/market-session.ts#L33)*
 
 **Parameters:**
 
 | Name | Type |
 | ------ | ------ |
 | date | `Date` |
-| `Optional` sessions | `string`[] |
+| `Optional` sessions | `string`[] \| `number`[] |
 
-**Returns:** `number`[]
+**Returns:** `string`[] \| `number`[]
 
 ## Index
 
@@ -37,7 +37,7 @@
 
 ▸ **fromString**(session: *`string`*): `number`
 
-*Defined in [market-session.ts:20](https://github.com/strong-roots-capital/market-session/blob/42ebbb2/src/market-session.ts#L20)*
+*Defined in [market-session.ts:35](https://github.com/strong-roots-capital/market-session/blob/a76f7cf/src/market-session.ts#L35)*
 
 **Parameters:**
 
@@ -54,7 +54,7 @@ ___
 
 ▸ **toString**(session: *`number`*): `string`
 
-*Defined in [market-session.ts:21](https://github.com/strong-roots-capital/market-session/blob/42ebbb2/src/market-session.ts#L21)*
+*Defined in [market-session.ts:36](https://github.com/strong-roots-capital/market-session/blob/a76f7cf/src/market-session.ts#L36)*
 
 **Parameters:**
 

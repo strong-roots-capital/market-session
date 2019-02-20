@@ -19,7 +19,7 @@ test('should throw ArgumentError when given nonsensical timeframes', t => {
         const error = t.throws(() => {
             session.fromString(str)
         }, Error)
-        t.is(0, error.message.indexOf('Expected string to match'))
+        t.is(error.name, 'ArgumentError')
     })
 })
 
@@ -51,14 +51,9 @@ test('months should return associated integer times numbers', t => {
     t.is(80640, session.fromString('2M'))
 })
 
-test('years should return associated integer times numbers', t => {
-    t.is(967680, session.fromString('2Y'))
-})
-
 test('should interpret an implicit 1 preceding a high-timeframe resolution', t => {
     t.is(60, session.fromString('H'))
     t.is(1440, session.fromString('D'))
     t.is(10080, session.fromString('W'))
     t.is(40320, session.fromString('M'))
-    t.is(483840, session.fromString('Y'))
 })

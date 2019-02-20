@@ -2,6 +2,8 @@
 
 > Logic for financial-market sessions
 
+Note: all times assumed to be UTC
+
 ## Install
 
 ``` shell
@@ -29,11 +31,7 @@ console.log(session(new Date('2019-04-01'), ['3M']).map(session.toString))
 //=> ['3M']
 ```
 
-## Limitations
+## Related
 
-- All times are assumed to be UTC.
-
-- The [Trading View](https://www.tradingview.com) format is used for expressing timeframes.
-
-- Note that periods of months in excess of one-year currently resolve
-  to one-year intervals. For example, `18M` is equivalent to `1Y`.
+- [is-tradingview-format](https://github.com/strong-roots-capital/is-tradingview-format)
+- [get-recent-sessions](https://github.com/strong-roots-capital/get-recent-sessions)
