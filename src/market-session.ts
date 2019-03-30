@@ -147,7 +147,9 @@ function session(date: Date, sessions?: number[]): number[];
 function session(date: Date, sessions: string[] | number[] = defaultSessions): string[] | number[] {
 
     let timeframes: string[] = []
-    sessions.forEach((session: number | string) => timeframes.push(is.number(session) ? toString(session) : session))
+    for (const session of sessions) {
+        timeframes.push(is.number(session) ? toString(session) : session)
+    }
 
     timeframes.forEach(timeframe => ow(timeframe, ow.string.is(inTradingviewFormat)))
 
